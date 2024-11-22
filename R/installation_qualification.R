@@ -195,6 +195,11 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
   if (length(find.package("mrgsolve", quiet=TRUE))==0) stop("mrgsolve not installed")
   if (length(find.package("rxode2", quiet=TRUE))==0) stop("rxode2 not installed")
   
+  # Check tinyTEX installation
+  if (!checkTinyTEXInstallation()) {
+    stop("TinyTeX is not properly installed. Please install it using tinytex::install_tinytex()")
+  }
+  
   isWindows <- tolower(getOSName()) %>% startsWith("win")
   if (isWindows) {
     defaultPath <- "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"

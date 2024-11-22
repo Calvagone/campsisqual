@@ -5,13 +5,9 @@ author: ""
 output: github_document
 ---
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
-EVAL_CODE <- FALSE
-```
-
 # campsisqual
 
-A library dedicate to the qualification of the Campsis Suite and to the qualification of Campsis models, provided you have the `campsistrans` package.
+A library dedicate to the qualification of the Campsis Suite and to the qualification of Campsis models against NONMEM, provided you have the `campsistrans` package.
 
 ## Installation
 
@@ -21,9 +17,17 @@ Install the latest release from GitHub:
 remotes::install_github("Calvagone/campsisqual")
 ```
 
+Install TinyTEX:
+  
+```{r, eval=FALSE}
+tinytex::install_tinytex()
+```
+
 ## Qualify the Campsis Suite
 
-```{r, eval=EVAL_CODE}
+Please contact Calvagone to get your certificate and the qualification suite.
+
+```{r, eval=FALSE}
 library(campsisqual)
 credentials <- Credentials(cert = "<PATH_TO_CERTIFICATE>",
                            key = "<PATH_TO_PRIVATE_KEY>",
@@ -43,68 +47,4 @@ runQualification(
   fullname = "<YOUR_NAME>",
   qualification_suite = suite
 )
-```
-
-## Qualify a model imported from NONMEM with campsistrans 
-
-First import the `campsisqual` package and its dependencies:
-
-```{r, message=FALSE, eval=EVAL_CODE}
-library(campsis)
-library(campsistrans)
-library(campsisqual)
-```
-
-Import your NONMEM model using `campsistrans`:
-
-```{r, eval=EVAL_CODE}
-object <- importNONMEM(campsistrans::getNONMEMModelTemplate(4, 4))
-```
-
-Convert the imported NONMEM model to a Campsis model:
-
-```{r, eval=EVAL_CODE}
-model <- object %>% export(dest="campsis")
-```
-
-Create a dataset using Campsis. For instance, inject a bolus of 1000 mg into the absorption compartment.
-
-```{r, eval=EVAL_CODE}
-dataset <- Dataset(1) %>%
-  add(Bolus(time=0, amount=1000, compartment=1)) %>%
-  add(Observations(times=seq(1, 24, by=1), compartment=2))
-```
-
-Disable inter-individual variability (IIV) and residual unexplained variability (RUV). 
-
-```{r, eval=EVAL_CODE}
-model <- model %>% disable(c("IIV", "RUV"))
-```
-
-Qualify Campsis model implementation against NONMEM. 
-
-```{r, eval=EVAL_CODE}
-  summary <- qualify(
-      x = object,
-      model = model,
-      dataset = dataset,
-      variables = "CONC",
-      outputFolder = "readme_tmp",
-      reexecuteNONMEM = TRUE)
-```
-
-Check if qualification passed. 
-
-```{r, eval=EVAL_CODE}
-  summary %>% passed()
-```
-
-Check qualification plot and table. 
-
-```{r, eval=EVAL_CODE}
-  summary %>% getPlot(id=1, variable="CONC")
-```
-
-```{r, eval=EVAL_CODE}
-  summary %>% getTable(id=1)
 ```
