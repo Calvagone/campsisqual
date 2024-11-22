@@ -1,5 +1,9 @@
 # campsisqual 1.3.0
 
+* Campsisqual now public on GitHub #1
+* Configure continuous integration with GitHub actions #2
+* Check tinytex installation is working with a minimalist example #3
+* Check simulation engines are installed before the qualification #4
 * Add GPL license
 * Make the qualification suite external to campsisqual
 * Remove digital signature section

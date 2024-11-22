@@ -33,7 +33,7 @@ credentials <- Credentials(cert = "<PATH_TO_CERTIFICATE>",
                            key = "<PATH_TO_PRIVATE_KEY>",
                            passphrase = "<PASSPHRASE>")
 
-suite <- QualificationSuite(path = "qualification_suite_calvagone.zip",
+suite <- QualificationSuite(path = "<PATH_TO_QUALIFICATION_SUITE>",
                             credentials = credentials)
 
 runQualification(
