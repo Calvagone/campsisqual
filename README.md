@@ -1,5 +1,10 @@
 
-# campsisqual
+# campsisqual <img src='man/figures/logo.png' align="right" alt="" width="120" />
+
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/Calvagone/campsisqual/workflows/R-CMD-check/badge.svg)](https://github.com/Calvagone/campsisqual/actions)
+<!-- badges: end -->
 
 A library dedicate to the qualification of the Campsis Suite and to the
 qualification of Campsis models against NONMEM, provided you have the
