@@ -55,12 +55,20 @@ summariseRiskmetric.pkg_metric_has_website <- function(x, package) {
   return(tibble::tibble(Criteria="Has website?", Result=riskMetricResult(x), `More info`=riskMetricToString(x), Category="Documentation"))
 }
 
+getPackageBranch <- function(package) {
+  if (package %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsistrans", "ecampsis")) {
+    return("main")
+  } else {
+    return("master")
+  }
+}
+
 #' @export
 summariseRiskmetric.pkg_metric_has_news <- function(x, package) {
   # Add a link to the online file
   result <- riskMetricResult(x)
   if (result == "Yes") {
-    info <- sprintf("https://github.com/Calvagone/%s/blob/main/NEWS.md", package)
+    info <- sprintf("https://github.com/Calvagone/%s/blob/%s/NEWS.md", package, getPackageBranch(package))
   } else {
     info <- ""
   }

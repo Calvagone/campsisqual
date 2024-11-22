@@ -36,6 +36,7 @@ Imports:
     tibble,
     tictoc,
     tidyr,
+    tinytex,
     zip
 Suggests: 
     bookdown,
