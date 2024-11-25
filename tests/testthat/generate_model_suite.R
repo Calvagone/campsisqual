@@ -244,3 +244,81 @@ generateModelSuiteFiles <- function() {
   # Careful, execute on Windows not accepting too many models (e.g. like > 100 models)
   cat(command)
 }
+
+fixAllParameters <- function(model) {
+  model@parameters@list <- model@parameters@list %>% purrr::map(.f=function(x) {
+    x@fix <- TRUE
+    return(x)
+  })
+  return(model)
+}
+
+addTable <- function(nonmem, output) {
+  nonmem@table <- nonmem@table %>%
+    add(KeyValue("ID")) %>%
+    add(KeyValue("ARM")) %>%
+    add(KeyValue("TIME")) %>%
+    add(KeyValue("EVID")) %>%
+    add(KeyValue("MDV")) %>%
+    add(KeyValue("DV")) %>%
+    add(KeyValue("AMT")) %>%
+    add(KeyValue("CMT")) %>%
+    add(KeyValue("DOSENO")) %>%
+    add(KeyValue(output)) %>%
+    add(KeyValue("FILE", "output.tab")) %>%
+    add(KeyValue("ONEHEADER")) %>%
+    add(KeyValue("NOAPPEND")) %>%
+    add(KeyValue("NOPRINT"))
+  return(nonmem)
+}
+
+generatePKForSimulation <- function(pk) {
+  obj <- pk@export
+  
+  shortName <- pk %>% getShortName()
+  
+  # Campsis model with a few adjustments
+  campsis <- obj@model %>%
+    modelPostProcessing(shortName=shortName) %>%
+    replaceR0ByRBSL()
+  
+  # Fix all parameters in control stream, disable IIV (ETA's passed through CAMPSIS dataset) and RUV
+  nonmem <- campsis %>%
+    fixAllParameters() %>%
+    disable(c("IIV", "RUV")) %>%
+    export(dest=calvamod::NONMEMModel(), imodel=pk, estimation=FALSE)
+  
+  # Add output table
+  nonmem <- nonmem %>% addTable(output="CONC")
+  
+  final_dataset <- obj@dataset
+  
+  # Export dataset
+  table <- final_dataset %>% export(dest="mrgsolve", model=campsis, seed=1, settings=Settings(NOCB(TRUE, "TDOS"))) %>%
+    dplyr::mutate_if(is.numeric, signif) %>%
+    calvamod::standardiseDataset()
+  
+  for (header in colnames(table)) {
+    nonmem@input <- nonmem@input %>% add(KeyValue(header))
+  }
+  
+  # Create PK folder
+  pkFolder <- paste0(testFolder, "qualification/", shortName, "/")
+  dir.create(file.path(pkFolder), showWarnings=FALSE)
+  
+  # Create NONMEM folder
+  nonmemFolder <- paste0(pkFolder, "nonmem/")
+  dir.create(file.path(nonmemFolder), showWarnings=FALSE)
+  
+  # Export NONMEM
+  nonmem %>% write(paste0(nonmemFolder, "model.mod"))
+  
+  # Write dataset
+  write.csv(table, file=paste0(nonmemFolder, "dataset.csv"), row.names=FALSE, quote=FALSE)
+  
+  # Export CAMPSIS
+  campsisFolder <- paste0(pkFolder, "campsis/")
+  campsis %>% write(campsisFolder)
+  
+  return(paste0(nonmemFolder, "model.mod"))
+}
