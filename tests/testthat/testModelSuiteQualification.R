@@ -82,12 +82,12 @@ generateModelIndexes <- function(pks) {
   return(modelIndexes)
 }
 
-pks <- getAllModelNames()
-modelIndexes <- generateModelIndexes(pks)
-
 if (!isQualificationSuiteProvided()) {
   return(TRUE)
 }
+
+pks <- getAllModelNames()
+modelIndexes <- generateModelIndexes(pks)
 
 qualifyModelSuiteModel <- function(shortName) {
   dataset <- generateDatasetBasedOnModelName(shortName)
