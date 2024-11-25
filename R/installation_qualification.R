@@ -301,6 +301,9 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6) {
   testResults <- foreach::foreach(i=seq_along(packages), .combine=append, .options.snow=opts) %dopar% {
     package <- packages[i]
     options(campsisqual.options=qualOptions)
+    # Explicitly skip vdiffr tests
+    # Note: even if FALSE, these tests may be skipped automatically, see argument 'cran' of method expect_doppelganger
+    options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=TRUE))
     retValue <- list()
     retValue[[package]] <- testthat::test_package(package, reporter=c("list"), stop_on_failure=FALSE, stop_on_warning=FALSE)
     return(retValue)
