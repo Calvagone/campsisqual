@@ -188,10 +188,17 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
   if (!all(packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis"))) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
   }
-    
+
   if (length(find.package("ncappc", quiet=TRUE))==0) stop("ncappc not installed")
   if (length(find.package("tinytex", quiet=TRUE))==0) stop("tinytex not installed")
   if (length(find.package("tictoc", quiet=TRUE))==0) stop("tictoc not installed")
+  if (length(find.package("mrgsolve", quiet=TRUE))==0) stop("mrgsolve not installed")
+  if (length(find.package("rxode2", quiet=TRUE))==0) stop("rxode2 not installed")
+  
+  # Check tinyTEX installation
+  if (!checkTinyTEXInstallation()) {
+    stop("TinyTeX is not properly installed. Please install it using tinytex::install_tinytex()")
+  }
   
   isWindows <- tolower(getOSName()) %>% startsWith("win")
   if (isWindows) {
@@ -294,6 +301,9 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6) {
   testResults <- foreach::foreach(i=seq_along(packages), .combine=append, .options.snow=opts) %dopar% {
     package <- packages[i]
     options(campsisqual.options=qualOptions)
+    # Explicitly skip vdiffr tests
+    # Note: even if FALSE, these tests may be skipped automatically, see argument 'cran' of method expect_doppelganger
+    options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=TRUE))
     retValue <- list()
     retValue[[package]] <- testthat::test_package(package, reporter=c("list"), stop_on_failure=FALSE, stop_on_warning=FALSE)
     return(retValue)

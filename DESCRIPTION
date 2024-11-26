@@ -36,6 +36,7 @@ Imports:
     tibble,
     tictoc,
     tidyr,
+    tinytex,
     zip
 Suggests: 
     bookdown,
@@ -53,6 +54,7 @@ Language: en-US
 LazyData: true
 RoxygenNote: 7.3.2
 Collate:
+    'tinytex.R'
     'qualification_suite_credentials.R'
     'qualification_suite.R'
     'dataset.R'
