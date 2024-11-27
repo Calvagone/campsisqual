@@ -354,14 +354,17 @@ renderReport <- function(results, packages, fullname, initials=NULL, output_dir,
       paste0(collapse="")
   }
   
+  rmdFilename <- ifelse("ecampsis" %in% packages,
+                        "qualification_ecampsis_template.Rmd",
+                        "qualification_campsis_template.Rmd")
+  
   # Rendering report
   report <- tryCatch(
     rmarkdown::render(
-      input=file.path(results$qualSuite, "reporting", "qualification_campsis_template.Rmd"),
+      input=file.path(results$qualSuite, "reporting", rmdFilename),
       params=list(results=results$all,
                   summarised_results=results$summarised,
                   warnings=results$warnings,
-                  doc_title="Installation and Operational Qualification of the Campsis Suite",
                   packages=packages,
                   fullname=fullname,
                   credentials=credentials),
