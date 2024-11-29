@@ -1,3 +1,8 @@
+# campsisqual 1.3.1
+
+* Select different Rmd template for qualification of e-Campsis #7
+* Add argument 'skip_vdiffr' #8
+
 # campsisqual 1.3.0
 
 * Campsisqual now public on GitHub #1
