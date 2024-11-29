@@ -340,10 +340,11 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6) {
 #' @importFrom rmarkdown render
 renderReport <- function(results, packages, fullname, initials=NULL, output_dir, qualification_suite) {
   credentials <- qualification_suite@credentials
-  
+  eCampsisQual <- "ecampsis" %in% packages
+
   # Report filename
-  reportFilename <- paste0("IQ_OQ_Campsis_Suite-",
-                           getNamespaceVersion("campsis") %>% as.character(),
+  reportFilename <- paste0(sprintf("IQ_OQ_%s-", ifelse(eCampsisQual, "e-Campsis", "Campsis_Suite")),
+                           ifelse(eCampsisQual, getNamespaceVersion("ecampsis"), getNamespaceVersion("campsis")),
                            "_", getOSName(short=TRUE), "_", initials,
                            "_", gsub("-", "", x=Sys.Date() %>% as.character()))
   
@@ -354,7 +355,7 @@ renderReport <- function(results, packages, fullname, initials=NULL, output_dir,
       paste0(collapse="")
   }
   
-  rmdFilename <- ifelse("ecampsis" %in% packages,
+  rmdFilename <- ifelse(eCampsisQual,
                         "qualification_ecampsis_template.Rmd",
                         "qualification_campsis_template.Rmd")
   
