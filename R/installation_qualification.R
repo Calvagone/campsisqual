@@ -177,6 +177,8 @@ collectPackageWarnings <- function(x) {
 #' @param initials username initials to be used in the filename. If not provided, initials are deduced from the fullname.
 #' @param output_dir output directory
 #' @param qualification_suite qualification suite object, type ?QualificationSuite for more information
+#' @param cpu number of workers to be used, default is 6 workers
+#' @param skip_vdiffr skip Vdiffr tests, default is TRUE
 #' @return TRUE if the qualification passes, FALSE otherwise
 #' @importFrom purrr map_df
 #' @importFrom testthat test_package
@@ -184,7 +186,7 @@ collectPackageWarnings <- function(x) {
 #' @importFrom tictoc tic toc
 #' @importFrom PKI PKI.load.cert PKI.verifyCA
 #' @export
-runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL) {
+runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE) {
   if (!all(packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis"))) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
   }
@@ -209,7 +211,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
   }
   
   tictoc::tic()
-  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite)
+  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite, cpu=cpu, skip_vdiffr=skip_vdiffr)
   if (!is.null(qualification_suite)) {
     report <- renderReport(results=results, packages=packages, fullname=fullname, initials=initials,
                            output_dir=output_dir, qualification_suite=qualification_suite)
@@ -229,6 +231,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @param packages packages to qualify
 #' @param qualification_suite qualification suite object
 #' @param cpu number of workers to be used
+#' @param skip_vdiffr skip Vdiffr tests, default is TRUE
 #' @return summarised results
 #' @importFrom purrr map_df
 #' @importFrom testthat test_package
@@ -238,7 +241,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @importFrom pbmcapply progressBar
 #' @importFrom zip unzip
 #' @export
-runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6) {
+runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE) {
   packagesNo <- length(packages)
   if (packagesNo == 0) {
     stop("No packages to qualify")
@@ -300,10 +303,10 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6) {
   
   testResults <- foreach::foreach(i=seq_along(packages), .combine=append, .options.snow=opts) %dopar% {
     package <- packages[i]
+    Sys.setenv("NOT_CRAN"=TRUE)
     options(campsisqual.options=qualOptions)
-    # Explicitly skip vdiffr tests
-    # Note: even if FALSE, these tests may be skipped automatically, see argument 'cran' of method expect_doppelganger
-    options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=TRUE))
+    options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr))
+    options(ecampsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr, SKIP_NM_IMPORT_TESTS=FALSE))
     retValue <- list()
     retValue[[package]] <- testthat::test_package(package, reporter=c("list"), stop_on_failure=FALSE, stop_on_warning=FALSE)
     return(retValue)

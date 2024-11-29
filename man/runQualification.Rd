@@ -9,7 +9,9 @@ runQualification(
   fullname,
   initials = NULL,
   output_dir = getwd(),
-  qualification_suite = NULL
+  qualification_suite = NULL,
+  cpu = 6L,
+  skip_vdiffr = TRUE
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ runQualification(
 \item{output_dir}{output directory}
 
 \item{qualification_suite}{qualification suite object, type ?QualificationSuite for more information}
+
+\item{cpu}{number of workers to be used, default is 6 workers}
+
+\item{skip_vdiffr}{skip Vdiffr tests, default is TRUE}
 }
 \value{
 TRUE if the qualification passes, FALSE otherwise

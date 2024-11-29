@@ -4,7 +4,12 @@
 \alias{runQualificationCore}
 \title{Run qualification core.}
 \usage{
-runQualificationCore(packages, qualification_suite = NULL, cpu = 6)
+runQualificationCore(
+  packages,
+  qualification_suite = NULL,
+  cpu = 6L,
+  skip_vdiffr = TRUE
+)
 }
 \arguments{
 \item{packages}{packages to qualify}
@@ -12,6 +17,8 @@ runQualificationCore(packages, qualification_suite = NULL, cpu = 6)
 \item{qualification_suite}{qualification suite object}
 
 \item{cpu}{number of workers to be used}
+
+\item{skip_vdiffr}{skip Vdiffr tests, default is TRUE}
 }
 \value{
 summarised results
