@@ -283,8 +283,10 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
   }
   
   # Start cluster configuration
-  cl <-  parallel::makeCluster(cpu)
-  doSNOW::registerDoSNOW(cl)
+  if (cpu > 1) {
+    cl <-  parallel::makeCluster(cpu)
+    doSNOW::registerDoSNOW(cl)
+  }
   `%dopar%` <- foreach::`%dopar%`
   
   # Progress bar
@@ -313,7 +315,9 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
   }
   
   # Stop cluster
-  parallel::stopCluster(cl) 
+  if (cpu > 1) {
+    parallel::stopCluster(cl)
+  }
   
   # Clean test results
   testResultsCleaned <- testResults %>%
