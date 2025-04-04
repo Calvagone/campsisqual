@@ -29,6 +29,6 @@ setMethod("setDefaultObsCmt", signature=c("arm", "integer"), definition=function
 
 #' @rdname setDefaultObsCmt
 setMethod("setDefaultObsCmt", signature=c("observations", "integer"), definition=function(object, index) {
-  object@compartment <- index
+  object@compartment <- as.character(index)
   return(object)
 })
