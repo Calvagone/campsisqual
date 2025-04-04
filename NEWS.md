@@ -1,3 +1,11 @@
+# campsisqual 1.3.3
+
+* Review method 'setDefaultObsCmt' #12
+
+# campsisqual 1.3.2
+
+* Parallelise tests only when cpu >1 #10
+
 # campsisqual 1.3.1
 
 * Select different Rmd template for qualification of e-Campsis #7
