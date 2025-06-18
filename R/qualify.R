@@ -51,6 +51,9 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   # Compare results
   summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest)
   
+  # Show if qualification passed or failed
+  cat(ifelse(summary %>% passed(), "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
+  
   return(summary)
 }
 
@@ -97,21 +100,3 @@ appendOriginalId <- function(x, dataset) {
   }
   return(x)
 }
-
-#' Execute NONMEM. PsN will be called automatically by R. 
-#' Prepared control stream 'model.mod' is executed automatically and NONMEM results
-#' are returned in the form of a data frame.
-#' 
-#' @param outputFolder output folder of prepared NONMEM files
-#' @param reexecuteNONMEM force re-execute NONMEM if results already exist
-#' @export
-executeNONMEM <- function(outputFolder, reexecuteNONMEM=T) {
-  tabFile <- paste0(outputFolder, "/", "output.tab")
-  if (!file.exists(tabFile) || reexecuteNONMEM) {
-    system("cmd.exe", input=paste0("cd ","\"", outputFolder, "\"", " & ", "execute ", "model.mod"))
-    unlink(paste0(outputFolder, "/", "modelfit_dir1"), recursive=TRUE)
-  }
-  nonmem <- read.nonmem(tabFile)[[1]] %>% as.data.frame()
-  return(nonmem)
-}
-
