@@ -5,35 +5,26 @@
 \title{Qualify function.}
 \usage{
 qualify(
-  x,
   model,
   dataset,
+  ipred,
   variables,
   tolerance = 0.01,
-  outputFolder,
-  reexecuteNONMEM = T,
-  compartments = NULL,
   dest = "rxode2",
   seed = 1,
   settings = Settings(NOCB(TRUE))
 )
 }
 \arguments{
-\item{x}{campsistrans object, if NULL, NONMEM files must exist}
+\item{model}{Campsis model to be qualified}
 
-\item{model}{CAMPSIS model}
+\item{dataset}{Campsis dataset or data frame to be qualified}
 
-\item{dataset}{CAMPSIS dataset}
+\item{ipred}{individual predictions to be compared with (=reference results)}
 
 \item{variables}{variables to compare}
 
 \item{tolerance}{relative tolerance accepted when comparing 2 values}
-
-\item{outputFolder}{output folder for qualification}
-
-\item{reexecuteNONMEM}{force re-execute NONMEM if results already exist}
-
-\item{compartments}{compartment indexes to output, numeric vector}
 
 \item{dest}{destination engine to use}
 

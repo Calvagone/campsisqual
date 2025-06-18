@@ -17,8 +17,8 @@ areEqual <- function(x, xref, tolerance, id, type) {
 
 #' Compare NONMEM results with CAMPSIS results, according to the given tolerance.
 #'
-#' @param nonmem NONMEM results, dataframe
-#' @param campsis CAMPSIS results, dataframe
+#' @param ipred individual predictions to be compared with (=reference results)
+#' @param campsis Campsis results, data frame
 #' @param variables variables to be compared
 #' @param tolerance comparison tolerance
 #' @param dest destination engine that was used in CAMPSIS
@@ -28,19 +28,19 @@ areEqual <- function(x, xref, tolerance, id, type) {
 #' @importFrom tibble add_column as_tibble
 #' @importFrom campsis obsOnly
 #' @export
-compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
+compare <- function(ipred, campsis, variables, tolerance, dest="RxODE") {
   
   # Check destination engine
   checkDest(dest)
   
   # Retrieve original destination tool from dataframe attributes (default is NONMEM)
-  original_dest <- attr(nonmem, "original_dest")
+  original_dest <- attr(ipred, "original_dest")
   if (is.null(original_dest)) {
     original_dest <- "NONMEM"
   }
   
   # Filtering on observations
-  nonmem_results <- nonmem %>% campsis::obsOnly()
+  ref_results <- ipred %>% campsis::obsOnly()
   campsis_results <- as.data.frame(campsis) %>% campsis::obsOnly()
 
   # Access ORIGINAL_ID column from CAMPSIS results
@@ -74,7 +74,7 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
     index <- which(id==ids)
     original_id <- original_ids[index]
     
-    nonmem_subj <- nonmem_results %>%
+    ref_subj <- ref_results %>%
       dplyr::filter(ID==id) %>%
       dplyr::mutate(Simulation=original_dest) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
@@ -84,17 +84,17 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
       dplyr::mutate(Simulation=dest) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
     
-    if (!all(areEqual(nonmem_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
+    if (!all(areEqual(ref_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
       stop(paste0("Times are not identical between NONMEM and CAMPSIS for subject ", id))
     }
     
-    subj <- dplyr::bind_rows(campsis_subj, nonmem_subj)
+    subj <- dplyr::bind_rows(campsis_subj, ref_subj)
     subj <- subj %>% tidyr::gather(key="variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
     subj$Pass <- FALSE
     
     # Qualification results summary
     for (output in variablesOfInterest) {
-      nonmemOutput <- subj %>%
+      refOutput <- subj %>%
         dplyr::filter(variable==output & Simulation==original_dest) %>%
         dplyr::pull(value)
       
@@ -102,7 +102,7 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
         dplyr::filter(variable==output & Simulation==dest) %>%
         dplyr::pull(value)
       
-      sameOutput <- areEqual(nonmemOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
+      sameOutput <- areEqual(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
       if (any(is.na(sameOutput))) {
         stop(paste0("NA's detected in original ID ", original_id))
       }

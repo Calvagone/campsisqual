@@ -4,12 +4,12 @@
 \alias{compare}
 \title{Compare NONMEM results with CAMPSIS results, according to the given tolerance.}
 \usage{
-compare(nonmem, campsis, variables, tolerance, dest = "RxODE")
+compare(ipred, campsis, variables, tolerance, dest = "RxODE")
 }
 \arguments{
-\item{nonmem}{NONMEM results, dataframe}
+\item{ipred}{individual predictions to be compared with (=reference results)}
 
-\item{campsis}{CAMPSIS results, dataframe}
+\item{campsis}{Campsis results, data frame}
 
 \item{variables}{variables to be compared}
 
