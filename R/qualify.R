@@ -19,11 +19,13 @@ checkDest <- function(dest) {
 #' @param dest destination engine to use
 #' @param seed simulation/table export seed, default value is 1
 #' @param settings simulation settings, please note NOCB is enabled by default
+#' @param idref ID reference, "dataset" or "ipred" (other IDs will be ignored)
 #' @return qualification summary
+#' @importFrom dplyr arrange filter
 #' @importFrom campsismod export
 #' @export
 qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
-                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE))) {
+                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred") {
   # Check destination engine
   checkDest(dest)
   
@@ -36,17 +38,36 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
     table <- dataset
   }
   
+  # Ignore IDs mechanism
+  datasetIds <- table$ID %>% unique()
+  ipredIds <- ipred$ID %>% unique()
+  if (idref == "dataset") {
+    refIds <- datasetIds
+  } else if (idref == "ipred") {
+    refIds <- ipredIds
+  } else {
+    stop("idref must be 'dataset' or 'ipred'")
+  }
+  table <- table %>%
+    dplyr::filter(ID %in% refIds) %>%
+    dplyr::arrange(ID, TIME) %>%
+    addSimulationIDColumn()
+  ipred <- ipred %>%
+    dplyr::filter(ID %in% refIds) %>%
+    dplyr::arrange(ID, TIME) %>%
+    addSimulationIDColumn()
+
   # Check destination engine
   checkDest(dest)
   
-  # Simulate with RxODE or mrgsolve
-  campsis <- campsis::simulate(model, dataset=table, dest=dest, seed=seed, settings=settings, outvars=variables)
+  # Simulate with rxode2 or mrgsolve
+  campsis <- campsis::simulate(model, dataset=dataset, dest=dest, seed=seed, settings=settings, outvars=variables)
   
   # Append ORIGINAL_ID
   campsis <- appendOriginalId(campsis, table)
   
-  # Fix RxODE bug
-  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=table, dest=dest)
+  # Fix rxode2 bug
+  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=dataset, dest=dest)
   
   # Compare results
   summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest)
@@ -99,4 +120,33 @@ appendOriginalId <- function(x, dataset) {
     }
   }
   return(x)
+}
+
+#' Add simulation ID column (id's starting at 1 and consecutive). Original column ID
+#' will be replaced by the new simulation ID column, after being renamed into
+#' ORIGINAL_ID column.
+#'
+#' @param dataset NONMEM dataset
+#' @param id current identifier column, default is 'ID'
+#' @return updated data frame
+#' @importFrom dplyr arrange group_by group_indices rename_at select
+addSimulationIDColumn <- function(dataset, id="ID") {
+  if ("ID" %in% colnames(dataset) && id != "ID") {
+    dataset <- dataset %>% dplyr::select(-ID)
+  }
+  # Current ID is renamed into ORIGINAL_ID
+  if (!("ORIGINAL_ID" %in% colnames(dataset))) {
+    dataset <- dataset %>%
+      dplyr::rename_at(.vars=id, .funs=function(x){"ORIGINAL_ID"})
+  }
+  # Arrange rows by ORIGINAL_ID
+  dataset <- dataset %>%
+    dplyr::arrange(ORIGINAL_ID)
+  # Add simulation ID column
+  dataset <- dataset %>%
+    tibble::add_column(ID=dataset %>% dplyr::group_by(ORIGINAL_ID) %>%
+                         dplyr::group_indices(), .before="ORIGINAL_ID")
+  # Arrange rows by ID
+  dataset <- dataset %>% dplyr::arrange(ID) 
+  return(dataset)
 }

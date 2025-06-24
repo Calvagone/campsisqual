@@ -12,7 +12,8 @@ qualify(
   tolerance = 0.01,
   dest = "rxode2",
   seed = 1,
-  settings = Settings(NOCB(TRUE))
+  settings = Settings(NOCB(TRUE)),
+  idref = "ipred"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ qualify(
 \item{seed}{simulation/table export seed, default value is 1}
 
 \item{settings}{simulation settings, please note NOCB is enabled by default}
+
+\item{idref}{ID reference, "dataset" or "ipred" (other IDs will be ignored)}
 }
 \value{
 qualification summary

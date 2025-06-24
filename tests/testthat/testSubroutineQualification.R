@@ -3,10 +3,14 @@ library(ggplot2)
 
 context("Qualification of the NONMEM subroutines, implemented in Campsis, against NONMEM")
 
-testFolder <- ""
+testFolder <-  file.path(getwd(), test_path())
 skipNONMEMPreparation <- TRUE
 
-source(paste0(testFolder, "testUtils.R"))
+# Load utilities
+source(file.path(testFolder, "testUtils.R"))
+
+# Activate suite
+activateSuite(enableSuite)
 
 advanFilename <- function(advan, trans, ext=".mod") {
   return(paste0("advan", advan, "_trans", trans, ext))

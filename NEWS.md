@@ -1,3 +1,7 @@
+# campsisqual 1.4.0
+
+* Rework qualification procedure #15
+
 # campsisqual 1.3.3
 
 * Review method 'setDefaultObsCmt' #12

@@ -3,10 +3,16 @@ library(ggplot2)
 
 context("Qualification of the Campsis model suite against NONMEM")
 
-testFolder <- ""
+testFolder <-  file.path(getwd(), test_path())
 
-source(paste0(testFolder, "testUtils.R"))
-source(paste0(testFolder, "generate_model_suite.R"))
+# Load utilities
+source(file.path(testFolder, "testUtils.R"))
+
+# Activate suite
+activateSuite(enableSuite)
+
+# Load the model suite generation script
+source(file.path(testFolder, "generate_model_suite.R"))
 
 #'
 #' Use this method to regenerate the list of models to test (calvamod required).
