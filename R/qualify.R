@@ -30,7 +30,8 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   checkDest(dest)
   
   # Dataset to table
-  if (is(dataset, "dataset")) {
+  isCampsisDataset <- is(dataset, "dataset")
+  if (isCampsisDataset) {
     settingsNM <- settings
     settingsNM@nocb@enable <- TRUE # NOCB always TRUE for NONMEM
     table <- dataset %>% campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
@@ -61,7 +62,10 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   checkDest(dest)
   
   # Simulate with rxode2 or mrgsolve
-  campsis <- campsis::simulate(model, dataset=dataset, dest=dest, seed=seed, settings=settings, outvars=variables)
+  # If dataset is a Campsis dataset, it will be used as is (e.g. Declare added automatically with mrgsolve, etc.)
+  # If dataset is a table, we give the table with the ID (from 1 to subjects) and ORIGINAL_ID columns
+  campsis <- campsis::simulate(model, dataset=if (isCampsisDataset) {dataset} else {table},
+                               dest=dest, seed=seed, settings=settings, outvars=variables)
   
   # Append ORIGINAL_ID
   campsis <- appendOriginalId(campsis, table)
