@@ -260,13 +260,16 @@ for (id in qual_summary@ids) {
   for (variable in qual_summary@variables) {
     if (!fig_failed_only || (fig_failed_only && failed)) {
       plot <- qual_summary %>% getPlot(id, variable)
-      print(plot)
+      cat('\\\\newpage\\n')
+      cat(paste0('## Subject ', id, '{#subject', id, '}'))
+      cat('\\n\\n')
+      print(plot + ggplot2::theme_bw())
     }
   }
 }
 ```
 "
-  return(paste0(partA, partB, collapse="\n"))
+return(paste0(partA, partB, collapse="\n"))
 }
 
 renderModelQualificationReport <- function() {
