@@ -241,7 +241,7 @@ table <- qual_summary@tables %>%
     purrr::map_df(~.x) %>%
     dplyr::group_by(dplyr::across(c('ID', 'variable'))) %>%
     dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
-                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), 'OK', sprintf('\\\\hyperref[sec:subject%i]{NOK}', ID)),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), sprintf('\\\\hyperref[sec:subject%i]{OK}', ID), sprintf('\\\\hyperref[sec:subject%i]{NOK}', ID)),
                      .groups='drop') %>%
     dplyr::rename(Variable=variable)
 kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
@@ -250,7 +250,7 @@ kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
 ```
 
 ```{r}
-fig_failed_only <- TRUE
+fig_failed_only <- FALSE
 table_failed_only <- TRUE
 
 for (id in qual_summary@ids) {
@@ -272,6 +272,7 @@ for (id in qual_summary@ids) {
         kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
         print()
     }
+    cat('\\n\\n')
   }
 }
 ```
