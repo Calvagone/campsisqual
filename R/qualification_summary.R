@@ -161,7 +161,8 @@ setMethod("write", signature = c("qualification_summary", "character"), definiti
 
 
 getQualificationTemplate <- function() {
-  retValue <- "
+partA <- 
+"
 ---
 output: pdf_document
 params: 
@@ -246,9 +247,26 @@ kableExtra::kbl(table, booktabs=T, longtable=TRUE) %>%
    kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
    print()
 ```
-
 "
-  return(retValue)
+partB <- 
+"
+```{r}
+fig_failed_only <- TRUE
+
+for (id in qual_summary@ids) {
+  summaryID <- qual_summary@summary %>% dplyr::filter(ID==id)
+  vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
+  failed <- !all(vector=='PASS')
+  for (variable in qual_summary@variables) {
+    if (!fig_failed_only || (fig_failed_only && failed)) {
+      plot <- qual_summary %>% getPlot(id, variable)
+      print(plot)
+    }
+  }
+}
+```
+"
+  return(paste0(partA, partB, collapse="\n"))
 }
 
 renderModelQualificationReport <- function() {
@@ -273,7 +291,6 @@ renderModelQualificationReport <- function() {
     params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
                   qual_summary=qual_summary)
   )
-  
   
 }
 
