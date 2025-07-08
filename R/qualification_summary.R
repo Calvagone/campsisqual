@@ -237,11 +237,16 @@ cat('\\\\newpage\\n')
 # Model qualification details
 
 ```{r}
+fig_failed_only <- TRUE
+table_failed_only <- TRUE
+
 table <- qual_summary@tables %>%
     purrr::map_df(~.x) %>%
     dplyr::group_by(dplyr::across(c('ID', 'variable'))) %>%
     dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
-                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), sprintf('\\\\hyperref[sec:subject%i]{OK}', ID), sprintf('\\\\hyperref[sec:subject%i]{NOK}', ID)),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(),
+                                     ifelse(fig_failed_only, 'OK', sprintf('\\\\hyperref[sec:subject%i]{OK}', ID)),
+                                     sprintf('\\\\hyperref[sec:subject%i]{NOK}', ID)),
                      .groups='drop') %>%
     dplyr::rename(Variable=variable)
 kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
@@ -250,10 +255,10 @@ kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
 ```
 
 ```{r}
-fig_failed_only <- FALSE
-table_failed_only <- TRUE
 
-for (id in qual_summary@ids) {
+for (index in seq_along(qual_summary@ids)) {
+  id <- qual_summary@ids[index]
+  original_id <- qual_summary@original_ids[index]
   summaryID <- qual_summary@summary %>% dplyr::filter(ID==id)
   vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
   failed <- !all(vector=='PASS')
@@ -261,7 +266,7 @@ for (id in qual_summary@ids) {
     if (!fig_failed_only || (fig_failed_only && failed)) {
       plot <- qual_summary %>% getPlot(id, variable)
       cat('\\\\newpage\\n')
-      cat(paste0('## Subject ', id, '{#subject', id, '}'))
+      cat(sprintf('## Subject %i (original ID: %s){#subject%i}', id, original_id, id))
       cat('\\n\\n')
       cat(sprintf('\\\\label{sec:subject%i}', id))
       print(plot + ggplot2::theme_bw())
