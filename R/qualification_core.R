@@ -131,7 +131,6 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
       data <- subj %>% dplyr::filter(variable==output)
       p <- ggplot2::ggplot(data=data, mapping=ggplot2::aes(x=TIME, y=value, group=Simulation)) + 
         ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
-        ggplot2::ggtitle(paste0("Subject ", id, " (", allPass, ")", ifelse(original_id=="", "", paste0(" - ", original_id)))) +
         ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +
         ggplot2::ylab(output) +
         ggplot2::scale_colour_manual(values=c("NOK"="#F23833", "OK"="#83CC73"), drop=FALSE)

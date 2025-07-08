@@ -161,7 +161,7 @@ setMethod("write", signature = c("qualification_summary", "character"), definiti
 
 
 getQualificationTemplate <- function() {
-partA <- 
+x <- 
 "
 ---
 output: pdf_document
@@ -185,6 +185,7 @@ header-includes:
   - \\usepackage{makecell}
   - \\usepackage{xcolor}
   - \\usepackage{titling}
+  - \\usepackage{hyperref}
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, results='asis')
@@ -240,18 +241,17 @@ table <- qual_summary@tables %>%
     purrr::map_df(~.x) %>%
     dplyr::group_by(dplyr::across(c('ID', 'variable'))) %>%
     dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
-                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), 'OK', 'NOK'),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), 'OK', sprintf('\\\\hyperref[sec:subject%i]{NOK}', ID)),
                      .groups='drop') %>%
     dplyr::rename(Variable=variable)
-kableExtra::kbl(table, booktabs=T, longtable=TRUE) %>%
+kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
    kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
    print()
 ```
-"
-partB <- 
-"
+
 ```{r}
 fig_failed_only <- TRUE
+table_failed_only <- TRUE
 
 for (id in qual_summary@ids) {
   summaryID <- qual_summary@summary %>% dplyr::filter(ID==id)
@@ -263,13 +263,21 @@ for (id in qual_summary@ids) {
       cat('\\\\newpage\\n')
       cat(paste0('## Subject ', id, '{#subject', id, '}'))
       cat('\\n\\n')
+      cat(sprintf('\\\\label{sec:subject%i}', id))
       print(plot + ggplot2::theme_bw())
+    }
+    if (!table_failed_only || (table_failed_only && failed)) {
+      iTable <- qual_summary %>% getTable(id)
+      kableExtra::kbl(iTable, booktabs=T, longtable=TRUE) %>%
+        kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+        print()
     }
   }
 }
 ```
+
 "
-return(paste0(partA, partB, collapse="\n"))
+return(x)
 }
 
 renderModelQualificationReport <- function() {
