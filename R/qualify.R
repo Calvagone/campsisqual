@@ -20,12 +20,14 @@ checkDest <- function(dest) {
 #' @param seed simulation/table export seed, default value is 1
 #' @param settings simulation settings, please note NOCB is enabled by default
 #' @param idref ID reference, "dataset" or "ipred" (other IDs will be ignored)
+#' @param ipred_source source of individual predictions, default is "NONMEM" (informative field)
 #' @return qualification summary
 #' @importFrom dplyr arrange filter
 #' @importFrom campsismod export
 #' @export
 qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
-                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred") {
+                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred",
+                    ipred_source="NONMEM") {
   # Check destination engine
   checkDest(dest)
   
@@ -34,7 +36,8 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   if (isCampsisDataset) {
     settingsNM <- settings
     settingsNM@nocb@enable <- TRUE # NOCB always TRUE for NONMEM
-    table <- dataset %>% campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
+    table <- dataset %>%
+      campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
   } else {
     table <- dataset
   }
@@ -74,7 +77,7 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=dataset, dest=dest)
   
   # Compare results
-  summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest)
+  summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest, ipred_source=ipred_source)
   
   # Show if qualification passed or failed
   cat(ifelse(summary %>% passed(), "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
@@ -87,9 +90,9 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
 #' If the model has a lag time and if the dataset does have an observation at time 0,
 #' RxODE still outputs the time 0.
 #' 
-#' @param campsis CAMPSIS output
-#' @param model CAMPSIS model
-#' @param dataset engine table OR CAMPSIS dataset
+#' @param campsis Campsis output
+#' @param model Campsis model
+#' @param dataset engine table OR Campsis dataset
 #' @param dest destination engine
 #' @return the corrected output if the bug was not present if RxODE
 #' @importFrom dplyr filter
@@ -111,9 +114,9 @@ fixRxODEBug <- function(campsis, model, dataset, dest) {
 
 #' Append original ID to simulation output if it exists in the dataset.
 #' 
-#' @param x CAMPSIS output
-#' @param dataset CAMPSIS dataset or data frame
-#' @param dataset engine table OR CAMPSIS dataset
+#' @param x Campsis output
+#' @param dataset Campsis dataset or data frame
+#' @param dataset engine table OR Campsis dataset
 #' @return updated output
 #' @importFrom dplyr distinct left_join relocate select
 appendOriginalId <- function(x, dataset) {
@@ -146,6 +149,7 @@ addSimulationIDColumn <- function(dataset, id="ID") {
   # Arrange rows by ORIGINAL_ID
   dataset <- dataset %>%
     dplyr::arrange(ORIGINAL_ID)
+  
   # Add simulation ID column
   dataset <- dataset %>%
     tibble::add_column(ID=dataset %>% dplyr::group_by(ORIGINAL_ID) %>%

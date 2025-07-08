@@ -21,8 +21,13 @@ setClass(
     variables = "character",
     summary = "data.frame",
     plots = "list",
-    tables = "list"
-  )
+    tables = "list",
+    ipred_source = "character",
+    dest = "character",
+    model_name = "character",
+    tolerance = "numeric"
+  ),
+  prototype(ipred_source="<SOURCE>", model_name="<MODEL_NAME>", dest="<SIMULATION_ENGINE>", tolerance=as.numeric(NA)),
 )
 
 #_______________________________________________________________________________
@@ -149,4 +154,97 @@ setMethod("write", signature = c("qualification_summary", "character"), definiti
   }
   dev.off()
 })
+
+#_______________________________________________________________________________
+#----                                report                                 ----
+#_______________________________________________________________________________
+
+
+getQualificationTemplate <- function() {
+  retValue <- "
+---
+output: pdf_document
+params: 
+    set_title: 'My Title!'
+    qual_summary: list()
+title: '`r params$set_title`'
+header-includes:
+  - \\usepackage{booktabs}
+  - \\usepackage{longtable}
+  - \\usepackage{array}
+  - \\usepackage{multirow}
+  - \\usepackage{wrapfig}
+  - \\usepackage{float}
+  - \\usepackage{colortbl}
+  - \\usepackage{pdflscape}
+  - \\usepackage{tabu}
+  - \\usepackage{threeparttable}
+  - \\usepackage{threeparttablex}
+  - \\usepackage[normalem]{ulem}
+  - \\usepackage{makecell}
+  - \\usepackage{xcolor}
+  - \\usepackage{titling}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, results='asis')
+```
+
+# Computer information
+
+```{r}
+computerInfo <-
+  c('Full name:'=Sys.info()[['user']],
+    'Computer name:'=Sys.info()[['nodename']],
+    'Operating system:'=getOSName(),
+    'R version:'=paste(R.Version()[c('major', 'minor')], collapse='.'),
+    'rxode2 version:'=getNamespaceVersion('rxode2') %>% as.character(),
+    'mrgsolve version:'=getNamespaceVersion('mrgsolve') %>% as.character(),
+    'campsisqual version:'=getNamespaceVersion('campsisqual') %>% as.character()
+    )
+computerInfoDf <- data.frame(computerInfo)
+kableExtra::kbl(computerInfoDf, col.names=NULL, booktabs=T) %>% print()
+```
+
+# Model qualification summary
+
+```{r}
+summaryTable <-
+  c('Model name:'=qual_summary@model_name,
+    'Simulation engine:'=qual_summary@dest,
+    'Relative tolerance:'=qual_summary@tolerance,
+    'Variables compared:'=paste(qual_summary@variables, collapse=', '),
+    'No of ind. compared:'=length(qual_summary@ids),
+    'No of obs. compared:'=sum(qual_summary@tables %>% purrr::map_int(~nrow(.x)))
+    )
+summaryTable <- data.frame(summaryTable)
+kableExtra::kbl(summaryTable, col.names=NULL, booktabs=T) %>% print()
+```
+
+"
+  return(retValue)
+}
+
+renderModelQualificationReport <- function() {
+  template <- getQualificationTemplate()
+  
+  tmpFile <- tempfile(fileext = ".Rmd")
+  fileConn <- file(tmpFile)
+  writeLines(text=strsplit(x=template, split="\n")[[1]], con=fileConn)
+  close(fileConn)
+  
+  output_dir <- "C:/prj/campsisqual"
+  qual_summary <- qual
+  
+  ipred_source <- qual_summary@ipred_source
+  
+  # Render with Rmd
+  rmarkdown::render(
+    input = tmpFile,
+    output_format = "pdf_document",
+    output_file = "qualification_report.pdf",
+    output_dir=output_dir,
+    params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
+                  qual_summary=qual_summary)
+  )
+}
 

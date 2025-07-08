@@ -13,7 +13,8 @@ qualify(
   dest = "rxode2",
   seed = 1,
   settings = Settings(NOCB(TRUE)),
-  idref = "ipred"
+  idref = "ipred",
+  ipred_source = "NONMEM"
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ qualify(
 \item{settings}{simulation settings, please note NOCB is enabled by default}
 
 \item{idref}{ID reference, "dataset" or "ipred" (other IDs will be ignored)}
+
+\item{ipred_source}{source of individual predictions, default is "NONMEM" (informative field)}
 }
 \value{
 qualification summary

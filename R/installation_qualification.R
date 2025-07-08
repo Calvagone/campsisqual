@@ -128,6 +128,12 @@ bindPackageAndVersion <- function(x, package) {
                x %>% summariseResults()))
 }
 
+#'
+#' Get OS name.
+#' 
+#' @param short if TRUE, returns a short version of the OS name (e.g., "Win10" for Windows 10)
+#' @return the OS name
+#' @export
 getOSName <- function(short=FALSE) {
   os <- paste(Sys.info()[["sysname"]], Sys.info()[["release"]])
   if (short) {
