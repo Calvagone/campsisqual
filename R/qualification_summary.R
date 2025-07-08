@@ -208,13 +208,16 @@ kableExtra::kbl(computerInfoDf, col.names=NULL, booktabs=T) %>% print()
 # Model qualification summary
 
 ```{r}
+obsAll <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x)))
+obsOK <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x %>% dplyr::filter(Pass=='OK'))))
 summaryTable <-
   c('Model name:'=qual_summary@model_name,
     'Simulation engine:'=qual_summary@dest,
     'Relative tolerance:'=qual_summary@tolerance,
     'Variables compared:'=paste(qual_summary@variables, collapse=', '),
     'No of ind. compared:'=length(qual_summary@ids),
-    'No of obs. compared:'=sum(qual_summary@tables %>% purrr::map_int(~nrow(.x)))
+    'No of obs. compared:'=as.character(obsAll),
+    'Success rate'=sprintf('%.1f%%', obsOK/obsAll*100)
     )
 summaryTable <- data.frame(summaryTable)
 kableExtra::kbl(summaryTable, col.names=NULL, booktabs=T) %>% print()
@@ -241,7 +244,7 @@ renderModelQualificationReport <- function() {
   rmarkdown::render(
     input = tmpFile,
     output_format = "pdf_document",
-    output_file = "qualification_report.pdf",
+    output_file = "qualification_report2.pdf",
     output_dir=output_dir,
     params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
                   qual_summary=qual_summary)
