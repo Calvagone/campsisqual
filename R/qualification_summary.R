@@ -222,6 +222,14 @@ summaryTable <-
 summaryTable <- data.frame(summaryTable)
 kableExtra::kbl(summaryTable, col.names=NULL, booktabs=T) %>% print()
 ```
+\\vspace{8pt}
+
+```{r}
+qualificationTime <- Sys.time()
+qualificationTimeString <- format(qualificationTime, '%Y-%m-%d %H:%M:%S')
+qualOK <- qual_summary %>% passed()
+if (qualOK) {cat(sprintf('Status: \\\\textcolor{teal}{\\\\textbf{SUCCESSFUL}} on %s', qualificationTimeString))} else {cat(sprintf('Status: \\\\textcolor{red}{\\\\textbf{FAIL}} on %s', qualificationTimeString))}
+```
 
 "
   return(retValue)
@@ -244,7 +252,7 @@ renderModelQualificationReport <- function() {
   rmarkdown::render(
     input = tmpFile,
     output_format = "pdf_document",
-    output_file = "qualification_report2.pdf",
+    output_file = "qualification_report.pdf",
     output_dir=output_dir,
     params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
                   qual_summary=qual_summary)
