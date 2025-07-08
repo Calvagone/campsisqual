@@ -242,7 +242,9 @@ table_failed_only <- TRUE
 
 table <- qual_summary@tables %>%
     purrr::map_df(~.x) %>%
-    dplyr::group_by(dplyr::across(c('ID', 'variable'))) %>%
+    dplyr::left_join(tibble::tibble(ID=qual_summary@ids, `Original ID`=qual_summary@original_ids), by='ID') %>%
+    dplyr::relocate(ID, `Original ID`) %>%
+    dplyr::group_by(dplyr::across(c('ID', 'Original ID', 'variable'))) %>%
     dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
                      'Status'=ifelse(sum(Pass=='OK')==dplyr::n(),
                                      ifelse(fig_failed_only, 'OK', sprintf('\\\\hyperref[sec:subject%i]{OK}', ID)),
