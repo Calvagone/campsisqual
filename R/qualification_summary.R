@@ -229,6 +229,22 @@ qualificationTime <- Sys.time()
 qualificationTimeString <- format(qualificationTime, '%Y-%m-%d %H:%M:%S')
 qualOK <- qual_summary %>% passed()
 if (qualOK) {cat(sprintf('Status: \\\\textcolor{teal}{\\\\textbf{SUCCESSFUL}} on %s', qualificationTimeString))} else {cat(sprintf('Status: \\\\textcolor{red}{\\\\textbf{FAIL}} on %s', qualificationTimeString))}
+cat('\\\\newpage\\n')
+```
+
+# Model qualification details
+
+```{r}
+table <- qual_summary@tables %>%
+    purrr::map_df(~.x) %>%
+    dplyr::group_by(dplyr::across(c('ID', 'variable'))) %>%
+    dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(), 'OK', 'NOK'),
+                     .groups='drop') %>%
+    dplyr::rename(Variable=variable)
+kableExtra::kbl(table, booktabs=T, longtable=TRUE) %>%
+   kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+   print()
 ```
 
 "
@@ -257,5 +273,7 @@ renderModelQualificationReport <- function() {
     params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
                   qual_summary=qual_summary)
   )
+  
+  
 }
 
