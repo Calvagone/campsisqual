@@ -1,6 +1,7 @@
 # campsisqual 1.4.0
 
-* Rework qualification procedure #15
+* Rework model qualification procedure #15
+* Option to skip Python tests in Campsis qualification #16
 
 # campsisqual 1.3.3
 
