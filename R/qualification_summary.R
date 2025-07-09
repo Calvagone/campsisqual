@@ -112,13 +112,17 @@ setMethod("passed", signature = c("qualification_summary"), definition = functio
 #----                                 write                                 ----
 #_______________________________________________________________________________
 
+#' Export qualification summary to PDF file.
+#'
 #' @param object qualification summary object
 #' @param file output file name
+#' @param original_model original model that was imported (e.g. RUN001.ctl), character, default is NULL
 #' @param failed_only if TRUE, only failed subjects will be included in the report, default is TRUE
 #' @param debug_tables if TRUE, include debug tables in the report with detailed results (only for failing subjects), default is TRUE
+#' @param notes additional notes to be included in the report, character, default is NULL
 #' @importFrom rmarkdown render
 setMethod("write", signature=c("qualification_summary", "character"),
-          definition=function(object, file, failed_only=TRUE, debug_tables=TRUE, ...) {
+          definition=function(object, file, original_model=NULL, failed_only=TRUE, debug_tables=TRUE, notes=NULL, ...) {
   # tmpFile <- "C:/prj/campsisqual/data-raw/model_qualification_template.Rmd"
 
   # Export Rmd to temporary file
@@ -139,6 +143,7 @@ setMethod("write", signature=c("qualification_summary", "character"),
     output_format="pdf_document",
     output_file=output_file,
     output_dir=output_dir,
-    params=list(set_title=title, qual_summary=object, failed_only=failed_only, debug_tables=debug_tables),
+    params=list(set_title=title, qual_summary=object, original_model=original_model,
+                failed_only=failed_only, debug_tables=debug_tables, notes=notes)
   )
 })

@@ -91,17 +91,18 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
     }
     
     subj <- dplyr::bind_rows(campsis_subj, ref_subj)
-    subj <- subj %>% tidyr::gather(key="variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
+    subj <- subj %>%
+      tidyr::gather(key="Variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
     subj$Pass <- FALSE
     
     # Qualification results summary
     for (output in variablesOfInterest) {
       refOutput <- subj %>%
-        dplyr::filter(variable==output & Simulation==ipred_source) %>%
+        dplyr::filter(Variable==output & Simulation==ipred_source) %>%
         dplyr::pull(value)
       
       campsisOutput <- subj %>%
-        dplyr::filter(variable==output & Simulation==dest) %>%
+        dplyr::filter(Variable==output & Simulation==dest) %>%
         dplyr::pull(value)
       
       sameOutput <- areEqual(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
@@ -115,9 +116,9 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
       }
       
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(variable==output & Simulation==ipred_source & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==ipred_source & sameOutput, TRUE, Pass))
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(variable==output & Simulation==dest & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==dest & sameOutput, TRUE, Pass))
     }
     subj$Pass <-  ifelse(subj$Pass, "OK", "NOK")
     
@@ -128,7 +129,7 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
     # Saving plots
     plots <- list()
     for (output in variablesOfInterest) {
-      data <- subj %>% dplyr::filter(variable==output)
+      data <- subj %>% dplyr::filter(Variable==output)
       p <- ggplot2::ggplot(data=data, mapping=ggplot2::aes(x=TIME, y=value, group=Simulation)) + 
         ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
         ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +
@@ -139,8 +140,8 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
     qualificationSummary@plots[[as.character(id)]] <- plots
     
     # Saving table output
-    timeCAMPSIS <- paste0("TIME_", dest)
-    timeNONMEM <- paste0("TIME_", ipred_source)
+    timeCAMPSIS <- paste0("Time ", dest)
+    timeNONMEM <- paste0("Time ", ipred_source)
     
     tryCatch(
       {
