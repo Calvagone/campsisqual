@@ -26,6 +26,8 @@
 \item{debug_tables}{if TRUE, include debug tables in the report with detailed results (only for failing subjects), default is TRUE}
 
 \item{notes}{additional notes to be included in the report, character, default is NULL}
+
+\item{...}{additional parameters, unused}
 }
 \description{
 Export qualification summary to PDF file.

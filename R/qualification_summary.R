@@ -124,6 +124,7 @@ setMethod("passed", signature = c("qualification_summary"), definition = functio
 #' @param failed_only if TRUE, only failed subjects will be included in the report, default is TRUE
 #' @param debug_tables if TRUE, include debug tables in the report with detailed results (only for failing subjects), default is TRUE
 #' @param notes additional notes to be included in the report, character, default is NULL
+#' @param ... additional parameters, unused
 #' @importFrom rmarkdown render
 setMethod("write", signature=c("qualification_summary", "character"),
           definition=function(object, file, original_model=NULL, failed_only=TRUE, debug_tables=TRUE, notes=NULL, ...) {
