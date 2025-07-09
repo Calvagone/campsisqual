@@ -21,5 +21,13 @@ Qualification summary class.
 \item{\code{plots}}{list of qualification plots}
 
 \item{\code{tables}}{list of qualification tables}
+
+\item{\code{ipred_source}}{source of individual predictions, e.g. "NONMEM"}
+
+\item{\code{dest}}{destination engine, e.g. "rxode2"}
+
+\item{\code{model_name}}{name of the model being qualified, e.g. "RUN001"}
+
+\item{\code{tolerance}}{relative tolerance used for qualification, numeric}
 }}
 

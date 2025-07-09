@@ -11,6 +11,10 @@
 #' @slot summary qualification summary, data frame
 #' @slot plots list of qualification plots
 #' @slot tables list of qualification tables
+#' @slot ipred_source source of individual predictions, e.g. "NONMEM"
+#' @slot dest destination engine, e.g. "rxode2"
+#' @slot model_name name of the model being qualified, e.g. "RUN001"
+#' @slot tolerance relative tolerance used for qualification, numeric
 #'
 #' @export
 setClass(

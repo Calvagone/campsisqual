@@ -129,7 +129,9 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
     # Saving plots
     plots <- list()
     for (output in variablesOfInterest) {
-      data <- subj %>% dplyr::filter(Variable==output)
+      data <- subj %>%
+        dplyr::filter(Variable==output) %>%
+        dplyr::mutate(Simulation=factor(Simulation, levels=c(ipred_source, dest)))
       p <- ggplot2::ggplot(data=data, mapping=ggplot2::aes(x=TIME, y=value, group=Simulation)) + 
         ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
         ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +

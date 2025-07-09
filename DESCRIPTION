@@ -14,14 +14,13 @@ BugReports: https://github.com/Calvagone/campsisqual/issues
 Depends: 
     campsis,
     campsismod,
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports: 
     assertthat,
     doSNOW,
     dplyr,
     foreach,
     ggplot2,
-    gridExtra,
     jsonlite,
     kableExtra,
     openssl,
@@ -55,6 +54,7 @@ LazyData: true
 RoxygenNote: 7.3.2
 Collate:
     'data.R'
+    'special_operators.R'
     'tinytex.R'
     'qualification_suite_credentials.R'
     'qualification_suite.R'
