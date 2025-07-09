@@ -27,7 +27,8 @@ setClass(
     model_name = "character",
     tolerance = "numeric"
   ),
-  prototype(ipred_source="<SOURCE>", model_name="<MODEL_NAME>", dest="<SIMULATION_ENGINE>", tolerance=as.numeric(NA)),
+  prototype(ipred_source="<SOURCE>", model_name="<MODEL_NAME>", dest="<SIMULATION_ENGINE>",
+            tolerance=as.numeric(NA)),
 )
 
 #_______________________________________________________________________________
@@ -111,76 +112,33 @@ setMethod("passed", signature = c("qualification_summary"), definition = functio
 #----                                 write                                 ----
 #_______________________________________________________________________________
 
-#' @importFrom gridExtra grid.table
-setMethod("write", signature = c("qualification_summary", "character"), definition = function(object, file, log=FALSE, ...) {
-  pdf(file=file, width=10, height=10)
-  
-  summary <- campsismod::processExtraArg(args=list(...), name="summary", default=TRUE)
-  fig_failed_only <- campsismod::processExtraArg(args=list(...), name="fig_failed_only", default=FALSE)
-  table_failed_only <- campsismod::processExtraArg(args=list(...), name="table_failed_only", default=TRUE)
-  firstPrint <- TRUE
-  
-  for (id in object@ids) {
-    summaryID <- object@summary %>% dplyr::filter(ID==id)
-    vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
-    failed <- !all(vector=="PASS")
-    for (variable in object@variables) {
-      if (!fig_failed_only || (fig_failed_only && failed)) {
-        # No need of plot.new for plots
-        plot <- object %>% getPlot(id, variable)
-        if (log) {
-          plot <- plot + ggplot2::scale_y_log10()
-        }
-        print(plot)
-        firstPrint <- FALSE
-      }
-    }
-    if (!table_failed_only || (table_failed_only && failed)) {
-      if (!firstPrint) {
-        plot.new()
-      } else {
-        firstPrint <- FALSE
-      }
-      gridExtra::grid.table(object %>% getTable(id), rows=NULL)
-    }
-  }
-  if (summary) {
-    if (!firstPrint) {
-      plot.new()
-    } else {
-      firstPrint <- FALSE
-    }
-    gridExtra::grid.table(object@summary, rows=NULL)
-  }
-  dev.off()
-})
-
-#_______________________________________________________________________________
-#----                                report                                 ----
-#_______________________________________________________________________________
-
-renderModelQualificationReport <- function() {
-
+#' @param object qualification summary object
+#' @param file output file name
+#' @param failed_only if TRUE, only failed subjects will be included in the report, default is TRUE
+#' @param debug_tables if TRUE, include debug tables in the report with detailed results (only for failing subjects), default is TRUE
+#' @importFrom rmarkdown render
+setMethod("write", signature=c("qualification_summary", "character"),
+          definition=function(object, file, failed_only=TRUE, debug_tables=TRUE, ...) {
   # tmpFile <- "C:/prj/campsisqual/data-raw/model_qualification_template.Rmd"
-  output_dir <- "C:/prj/campsisqual"
-  qual_summary <- qual
-  
-  ipred_source <- qual_summary@ipred_source
-  
+
+  # Export Rmd to temporary file
   tmpFile <- tempfile(fileext = ".Rmd")
   fileConn <- file(tmpFile)
   writeLines(text=campsisqual::model_qualification_template, con=fileConn)
   close(fileConn)
   
+  # Filename and output directory
+  output_dir <- dirname(file)
+  output_file <- basename(file)
+  
+  title <- sprintf("Qualification of Campsis model against %s predictions", object@ipred_source)
+  
   # Render with Rmd
   rmarkdown::render(
-    input = tmpFile,
-    output_format = "pdf_document",
-    output_file = "qualification_report.pdf",
+    input=tmpFile,
+    output_format="pdf_document",
+    output_file=output_file,
     output_dir=output_dir,
-    params = list(set_title=sprintf("Qualification of Campsis model against %s predictions", ipred_source),
-                  qual_summary=qual_summary)
+    params=list(set_title=title, qual_summary=object, failed_only=failed_only, debug_tables=debug_tables),
   )
-  
-}
-
+})

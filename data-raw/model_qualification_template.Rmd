@@ -3,6 +3,8 @@ output: pdf_document
 params: 
     set_title: 'My Title!'
     qual_summary: list()
+    failed_only: TRUE
+    debug_tables: TRUE
 title: '`r params$set_title`'
 header-includes:
   - \usepackage{booktabs}
@@ -72,9 +74,6 @@ cat('\\newpage\n')
 # Model qualification details
 
 ```{r}
-fig_failed_only <- TRUE
-table_failed_only <- TRUE
-
 table <- qual_summary@tables %>%
     purrr::map_df(~.x) %>%
     dplyr::left_join(tibble::tibble(ID=qual_summary@ids, `Original ID`=qual_summary@original_ids), by='ID') %>%
@@ -82,7 +81,7 @@ table <- qual_summary@tables %>%
     dplyr::group_by(dplyr::across(c('ID', 'Original ID', 'variable'))) %>%
     dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
                      'Status'=ifelse(sum(Pass=='OK')==dplyr::n(),
-                                     ifelse(fig_failed_only, 'OK', sprintf('\\hyperref[sec:subject%i]{OK}', ID)),
+                                     ifelse(failed_only, 'OK', sprintf('\\hyperref[sec:subject%i]{OK}', ID)),
                                      sprintf('\\hyperref[sec:subject%i]{NOK}', ID)),
                      .groups='drop') %>%
     dplyr::rename(Variable=variable)
@@ -100,7 +99,8 @@ for (index in seq_along(qual_summary@ids)) {
   vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
   failed <- !all(vector=='PASS')
   for (variable in qual_summary@variables) {
-    if (!fig_failed_only || (fig_failed_only && failed)) {
+    condition <- !failed_only || (failed_only && failed)
+    if (condition) {
       plot <- qual_summary %>% getPlot(id, variable)
       cat('\\newpage\n')
       cat(sprintf('## Subject %i (original ID: %s){#subject%i}', id, original_id, id))
@@ -108,13 +108,13 @@ for (index in seq_along(qual_summary@ids)) {
       cat(sprintf('\\label{sec:subject%i}', id))
       print(plot + ggplot2::theme_bw())
     }
-    if (!table_failed_only || (table_failed_only && failed)) {
+    if (condition && debug_tables) {
       iTable <- qual_summary %>% getTable(id)
       kableExtra::kbl(iTable, booktabs=T, longtable=TRUE) %>%
         kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
         print()
     }
-    cat('\n\n')
+    if (condition) cat('\n\n')
   }
 }
 ```
