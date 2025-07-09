@@ -23,6 +23,7 @@ Imports:
     ggplot2,
     jsonlite,
     kableExtra,
+    magrittr,
     openssl,
     parallel,
     pbmcapply,
