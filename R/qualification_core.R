@@ -133,7 +133,7 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
         ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
         ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +
         ggplot2::ylab(output) +
-        ggplot2::scale_colour_manual(values=c("NOK"="#F23833", "OK"="#83CC73"), drop=FALSE)
+        ggplot2::scale_colour_manual(values=c("NOK"="#FF0000", "OK"="#008080"), drop=FALSE)
       plots[[output]] <- p
     }
     qualificationSummary@plots[[as.character(id)]] <- plots

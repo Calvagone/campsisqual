@@ -1,0 +1,121 @@
+---
+output: pdf_document
+params: 
+    set_title: 'My Title!'
+    qual_summary: list()
+title: '`r params$set_title`'
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{tabu}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+  - \usepackage[normalem]{ulem}
+  - \usepackage{makecell}
+  - \usepackage{xcolor}
+  - \usepackage{titling}
+  - \usepackage{hyperref}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, results='asis')
+```
+
+# Computer information
+
+```{r}
+computerInfo <-
+  c('Full name:'=Sys.info()[['user']],
+    'Computer name:'=Sys.info()[['nodename']],
+    'Operating system:'=getOSName(),
+    'R version:'=paste(R.Version()[c('major', 'minor')], collapse='.'),
+    'rxode2 version:'=getNamespaceVersion('rxode2') %>% as.character(),
+    'mrgsolve version:'=getNamespaceVersion('mrgsolve') %>% as.character(),
+    'campsisqual version:'=getNamespaceVersion('campsisqual') %>% as.character()
+    )
+computerInfoDf <- data.frame(computerInfo)
+kableExtra::kbl(computerInfoDf, col.names=NULL, booktabs=T) %>% print()
+```
+
+# Model qualification summary
+
+```{r}
+obsAll <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x)))
+obsOK <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x %>% dplyr::filter(Pass=='OK'))))
+summaryTable <-
+  c('Model name:'=qual_summary@model_name,
+    'Simulation engine:'=qual_summary@dest,
+    'Relative tolerance:'=qual_summary@tolerance,
+    'Variables compared:'=paste(qual_summary@variables, collapse=', '),
+    'No of ind. compared:'=length(qual_summary@ids),
+    'No of obs. compared:'=as.character(obsAll),
+    'Success rate'=sprintf('%.1f%%', obsOK/obsAll*100)
+    )
+summaryTable <- data.frame(summaryTable)
+kableExtra::kbl(summaryTable, col.names=NULL, booktabs=T) %>% print()
+```
+\vspace{8pt}
+
+```{r}
+qualificationTime <- Sys.time()
+qualificationTimeString <- format(qualificationTime, '%Y-%m-%d %H:%M:%S')
+qualOK <- qual_summary %>% passed()
+if (qualOK) {cat(sprintf('Status: \\textcolor{teal}{\\textbf{SUCCESSFUL}} on %s', qualificationTimeString))} else {cat(sprintf('Status: \\textcolor{red}{\\textbf{FAIL}} on %s', qualificationTimeString))}
+cat('\\newpage\n')
+```
+
+# Model qualification details
+
+```{r}
+fig_failed_only <- TRUE
+table_failed_only <- TRUE
+
+table <- qual_summary@tables %>%
+    purrr::map_df(~.x) %>%
+    dplyr::left_join(tibble::tibble(ID=qual_summary@ids, `Original ID`=qual_summary@original_ids), by='ID') %>%
+    dplyr::relocate(ID, `Original ID`) %>%
+    dplyr::group_by(dplyr::across(c('ID', 'Original ID', 'variable'))) %>%
+    dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(),
+                                     ifelse(fig_failed_only, 'OK', sprintf('\\hyperref[sec:subject%i]{OK}', ID)),
+                                     sprintf('\\hyperref[sec:subject%i]{NOK}', ID)),
+                     .groups='drop') %>%
+    dplyr::rename(Variable=variable)
+kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
+   kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+   print()
+```
+
+```{r}
+
+for (index in seq_along(qual_summary@ids)) {
+  id <- qual_summary@ids[index]
+  original_id <- qual_summary@original_ids[index]
+  summaryID <- qual_summary@summary %>% dplyr::filter(ID==id)
+  vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
+  failed <- !all(vector=='PASS')
+  for (variable in qual_summary@variables) {
+    if (!fig_failed_only || (fig_failed_only && failed)) {
+      plot <- qual_summary %>% getPlot(id, variable)
+      cat('\\newpage\n')
+      cat(sprintf('## Subject %i (original ID: %s){#subject%i}', id, original_id, id))
+      cat('\n\n')
+      cat(sprintf('\\label{sec:subject%i}', id))
+      print(plot + ggplot2::theme_bw())
+    }
+    if (!table_failed_only || (table_failed_only && failed)) {
+      iTable <- qual_summary %>% getTable(id)
+      kableExtra::kbl(iTable, booktabs=T, longtable=TRUE) %>%
+        kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+        print()
+    }
+    cat('\n\n')
+  }
+}
+```
+
