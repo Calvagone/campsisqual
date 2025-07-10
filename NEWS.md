@@ -1,3 +1,8 @@
+# campsisqual 1.4.0
+
+* Rework model qualification procedure #15
+* Option to skip Python tests in Campsis qualification #16
+
 # campsisqual 1.3.3
 
 * Review method 'setDefaultObsCmt' #12

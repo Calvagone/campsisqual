@@ -7,9 +7,9 @@
 # reticulate::py_config()
 # version <- pharmpy["__version__"]
 
-testFolder <- ""
 testEngines <- c("mrgsolve", "rxode2")
 reexecuteNONMEM <- FALSE
+enableSuite <- FALSE
 
 #'
 #' Qualify model.
@@ -77,15 +77,16 @@ qualifyModel <- function(ctlPath, modelName, dataset, modelfun=NULL, dest, varia
     dataset <- dataset %>% setDefaultObsCmt(index)
   }
   
+  # Read individual predictions
+  ipred <- read.nonmem(file.path(nonmemModelFolder, "output.tab"))[[1]]
+  
   # Start qualification
   qual <- qualify(
-    x = object,
     model=model,
     dataset=dataset,
+    ipred=ipred,
     variables=variables,
     tolerance=tolerance,
-    outputFolder=nonmemModelFolder,
-    reexecuteNONMEM=reexecuteNONMEM,
     dest=dest,
     seed=seed,
     settings=settings)
@@ -115,3 +116,13 @@ isQualificationSuiteProvided <- function() {
 getCampsisqualOption <- function() {
   return(getOption("campsisqual.options"))
 } 
+
+activateSuite <- function(enable) {
+  if (enable) {
+    basePath <- "<PATH_TO_SUITE>"
+    qualOptions <- list()
+    qualOptions$QUALIFICATION_SUITE=file.path(basePath, "qualification_suite")
+    qualOptions$QUALIFICATION_SUITE_N_MODELS=97
+    options(campsisqual.options=qualOptions)
+  }
+}

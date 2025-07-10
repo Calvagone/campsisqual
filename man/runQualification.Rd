@@ -11,7 +11,8 @@ runQualification(
   output_dir = getwd(),
   qualification_suite = NULL,
   cpu = 6L,
-  skip_vdiffr = TRUE
+  skip_vdiffr = TRUE,
+  skip_python = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ runQualification(
 \item{cpu}{number of workers to be used, default is 6 workers}
 
 \item{skip_vdiffr}{skip Vdiffr tests, default is TRUE}
+
+\item{skip_python}{skip Python tests (e.g. Pharmpy in campsistrans), default is TRUE}
 }
 \value{
 TRUE if the qualification passes, FALSE otherwise

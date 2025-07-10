@@ -11,6 +11,10 @@
 #' @slot summary qualification summary, data frame
 #' @slot plots list of qualification plots
 #' @slot tables list of qualification tables
+#' @slot ipred_source source of individual predictions, e.g. "NONMEM"
+#' @slot dest destination engine, e.g. "rxode2"
+#' @slot model_name name of the model being qualified, e.g. "RUN001"
+#' @slot tolerance relative tolerance used for qualification, numeric
 #'
 #' @export
 setClass(
@@ -21,8 +25,14 @@ setClass(
     variables = "character",
     summary = "data.frame",
     plots = "list",
-    tables = "list"
-  )
+    tables = "list",
+    ipred_source = "character",
+    dest = "character",
+    model_name = "character",
+    tolerance = "numeric"
+  ),
+  prototype(ipred_source="<SOURCE>", model_name="<MODEL_NAME>", dest="<SIMULATION_ENGINE>",
+            tolerance=as.numeric(NA)),
 )
 
 #_______________________________________________________________________________
@@ -106,47 +116,39 @@ setMethod("passed", signature = c("qualification_summary"), definition = functio
 #----                                 write                                 ----
 #_______________________________________________________________________________
 
-#' @importFrom gridExtra grid.table
-setMethod("write", signature = c("qualification_summary", "character"), definition = function(object, file, log=FALSE, ...) {
-  pdf(file=file, width=10, height=10)
-  
-  summary <- campsismod::processExtraArg(args=list(...), name="summary", default=TRUE)
-  fig_failed_only <- campsismod::processExtraArg(args=list(...), name="fig_failed_only", default=FALSE)
-  table_failed_only <- campsismod::processExtraArg(args=list(...), name="table_failed_only", default=TRUE)
-  firstPrint <- TRUE
-  
-  for (id in object@ids) {
-    summaryID <- object@summary %>% dplyr::filter(ID==id)
-    vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
-    failed <- !all(vector=="PASS")
-    for (variable in object@variables) {
-      if (!fig_failed_only || (fig_failed_only && failed)) {
-        # No need of plot.new for plots
-        plot <- object %>% getPlot(id, variable)
-        if (log) {
-          plot <- plot + ggplot2::scale_y_log10()
-        }
-        print(plot)
-        firstPrint <- FALSE
-      }
-    }
-    if (!table_failed_only || (table_failed_only && failed)) {
-      if (!firstPrint) {
-        plot.new()
-      } else {
-        firstPrint <- FALSE
-      }
-      gridExtra::grid.table(object %>% getTable(id), rows=NULL)
-    }
-  }
-  if (summary) {
-    if (!firstPrint) {
-      plot.new()
-    } else {
-      firstPrint <- FALSE
-    }
-    gridExtra::grid.table(object@summary, rows=NULL)
-  }
-  dev.off()
-})
+#' Export qualification summary to PDF file.
+#'
+#' @param object qualification summary object
+#' @param file output file name
+#' @param original_model original model that was imported (e.g. RUN001.ctl), character, default is NULL
+#' @param failed_only if TRUE, only failed subjects will be included in the report, default is TRUE
+#' @param debug_tables if TRUE, include debug tables in the report with detailed results (only for failing subjects), default is TRUE
+#' @param notes additional notes to be included in the report, character, default is NULL
+#' @param ... additional parameters, unused
+#' @importFrom rmarkdown render
+setMethod("write", signature=c("qualification_summary", "character"),
+          definition=function(object, file, original_model=NULL, failed_only=TRUE, debug_tables=TRUE, notes=NULL, ...) {
+  # tmpFile <- "C:/prj/campsisqual/data-raw/model_qualification_template.Rmd"
 
+  # Export Rmd to temporary file
+  tmpFile <- tempfile(fileext = ".Rmd")
+  fileConn <- file(tmpFile)
+  writeLines(text=campsisqual::model_qualification_template, con=fileConn)
+  close(fileConn)
+  
+  # Filename and output directory
+  output_dir <- dirname(file)
+  output_file <- basename(file)
+  
+  title <- sprintf("Qualification of Campsis model against %s predictions", object@ipred_source)
+  
+  # Render with Rmd
+  rmarkdown::render(
+    input=tmpFile,
+    output_format="pdf_document",
+    output_file=output_file,
+    output_dir=output_dir,
+    params=list(set_title=title, qual_summary=object, original_model=original_model,
+                failed_only=failed_only, debug_tables=debug_tables, notes=notes)
+  )
+})

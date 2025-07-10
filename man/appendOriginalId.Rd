@@ -7,9 +7,9 @@
 appendOriginalId(x, dataset)
 }
 \arguments{
-\item{x}{CAMPSIS output}
+\item{x}{Campsis output}
 
-\item{dataset}{engine table OR CAMPSIS dataset}
+\item{dataset}{engine table OR Campsis dataset}
 }
 \value{
 updated output

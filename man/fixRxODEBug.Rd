@@ -10,11 +10,11 @@ RxODE still outputs the time 0.}
 fixRxODEBug(campsis, model, dataset, dest)
 }
 \arguments{
-\item{campsis}{CAMPSIS output}
+\item{campsis}{Campsis output}
 
-\item{model}{CAMPSIS model}
+\item{model}{Campsis model}
 
-\item{dataset}{engine table OR CAMPSIS dataset}
+\item{dataset}{engine table OR Campsis dataset}
 
 \item{dest}{destination engine}
 }

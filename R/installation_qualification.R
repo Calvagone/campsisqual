@@ -128,6 +128,12 @@ bindPackageAndVersion <- function(x, package) {
                x %>% summariseResults()))
 }
 
+#'
+#' Get OS name.
+#' 
+#' @param short if TRUE, returns a short version of the OS name (e.g., "Win10" for Windows 10)
+#' @return the OS name
+#' @export
 getOSName <- function(short=FALSE) {
   os <- paste(Sys.info()[["sysname"]], Sys.info()[["release"]])
   if (short) {
@@ -179,6 +185,7 @@ collectPackageWarnings <- function(x) {
 #' @param qualification_suite qualification suite object, type ?QualificationSuite for more information
 #' @param cpu number of workers to be used, default is 6 workers
 #' @param skip_vdiffr skip Vdiffr tests, default is TRUE
+#' @param skip_python skip Python tests (e.g. Pharmpy in campsistrans), default is TRUE
 #' @return TRUE if the qualification passes, FALSE otherwise
 #' @importFrom purrr map_df
 #' @importFrom testthat test_package
@@ -186,7 +193,8 @@ collectPackageWarnings <- function(x) {
 #' @importFrom tictoc tic toc
 #' @importFrom PKI PKI.load.cert PKI.verifyCA
 #' @export
-runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE) {
+runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL,
+                             cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
   if (!all(packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis"))) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
   }
@@ -211,7 +219,8 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
   }
   
   tictoc::tic()
-  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite, cpu=cpu, skip_vdiffr=skip_vdiffr)
+  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite,
+                                  cpu=cpu, skip_vdiffr=skip_vdiffr, skip_python=skip_python)
   if (!is.null(qualification_suite)) {
     report <- renderReport(results=results, packages=packages, fullname=fullname, initials=initials,
                            output_dir=output_dir, qualification_suite=qualification_suite)
@@ -232,6 +241,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @param qualification_suite qualification suite object
 #' @param cpu number of workers to be used
 #' @param skip_vdiffr skip Vdiffr tests, default is TRUE
+#' @param skip_python skip Python tests (e.g. Pharmpy in campsistrans), default is TRUE
 #' @return summarised results
 #' @importFrom purrr map_df
 #' @importFrom testthat test_package
@@ -241,7 +251,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @importFrom pbmcapply progressBar
 #' @importFrom zip unzip
 #' @export
-runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE) {
+runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
   packagesNo <- length(packages)
   if (packagesNo == 0) {
     stop("No packages to qualify")
@@ -307,6 +317,7 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
     package <- packages[i]
     Sys.setenv("NOT_CRAN"=TRUE)
     options(campsisqual.options=qualOptions)
+    options(campsistrans.options=list(SKIP_PHARMPY_TESTS=skip_python))
     options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr))
     options(ecampsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr, SKIP_NM_IMPORT_TESTS=FALSE))
     retValue <- list()

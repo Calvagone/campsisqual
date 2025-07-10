@@ -8,7 +8,8 @@ runQualificationCore(
   packages,
   qualification_suite = NULL,
   cpu = 6L,
-  skip_vdiffr = TRUE
+  skip_vdiffr = TRUE,
+  skip_python = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ runQualificationCore(
 \item{cpu}{number of workers to be used}
 
 \item{skip_vdiffr}{skip Vdiffr tests, default is TRUE}
+
+\item{skip_python}{skip Python tests (e.g. Pharmpy in campsistrans), default is TRUE}
 }
 \value{
 summarised results

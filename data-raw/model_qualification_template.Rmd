@@ -1,0 +1,143 @@
+---
+output: pdf_document
+params: 
+    set_title: 'My Title!'
+    qual_summary: list()
+    original_model: ''
+    failed_only: TRUE
+    debug_tables: TRUE
+    notes: ''
+title: '`r params$set_title`'
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{tabu}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+  - \usepackage[normalem]{ulem}
+  - \usepackage{makecell}
+  - \usepackage{xcolor}
+  - \usepackage{titling}
+  - \usepackage{hyperref}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, results='asis')
+```
+
+```{r}
+qual_summary <- params$qual_summary
+original_model <- params$original_model
+failed_only <- params$failed_only
+debug_tables <- params$debug_tables
+notes <- params$notes
+```
+
+# Computer information
+
+```{r}
+computerInfo <-
+  c('Full name:'=Sys.info()[['user']],
+    'Computer name:'=Sys.info()[['nodename']],
+    'Operating system:'=getOSName(),
+    'R version:'=paste(R.Version()[c('major', 'minor')], collapse='.'),
+    'rxode2 version:'=getNamespaceVersion('rxode2') %>% as.character(),
+    'mrgsolve version:'=getNamespaceVersion('mrgsolve') %>% as.character(),
+    'campsisqual version:'=getNamespaceVersion('campsisqual') %>% as.character()
+    )
+computerInfoDf <- data.frame(computerInfo)
+kableExtra::kbl(computerInfoDf, col.names=NULL, booktabs=T) %>% print()
+```
+
+# Model qualification summary
+
+```{r}
+obsAll <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x)))
+obsOK <- sum(qual_summary@tables %>% purrr::map_int(~nrow(.x %>% dplyr::filter(Pass=='OK'))))
+if (is.null(original_model) || original_model=='') {
+  summaryTable <- NULL
+} else {
+  summaryTable <- c('Original model:'=original_model)
+}
+summaryTable <- summaryTable %>% append(
+  c('Simulation engine:'=qual_summary@dest,
+    'Relative tolerance:'=qual_summary@tolerance,
+    'Variable(s) compared:'=paste(qual_summary@variables, collapse=', '),
+    'No of ind. compared:'=length(qual_summary@ids),
+    'No of obs. compared:'=as.character(obsAll),
+    'Success rate:'=sprintf('%.1f%%', obsOK/obsAll*100)
+    )
+)
+summaryTable <- data.frame(summaryTable)
+kableExtra::kbl(summaryTable, col.names=NULL, booktabs=T) %>% print()
+```
+\vspace{8pt}
+
+```{r}
+qualificationTime <- Sys.time()
+qualificationTimeString <- format(qualificationTime, '%Y-%m-%d %H:%M:%S')
+qualOK <- qual_summary %>% passed()
+if (qualOK) {cat(sprintf('Status: \\textcolor{teal}{\\textbf{SUCCESSFUL}} on %s', qualificationTimeString))} else {cat(sprintf('\\textbf{Status:} \\textcolor{red}{\\textbf{FAIL}} on %s\n', qualificationTimeString))}
+```
+
+```{r}
+if (!(is.null(notes) || notes=='')) {
+  cat(sprintf('\\textbf{Additional notes:} %s', notes))
+}
+cat('\\newpage\n')
+```
+
+# Model qualification details
+
+```{r}
+table <- qual_summary@tables %>%
+    purrr::map_df(~.x) %>%
+    dplyr::left_join(tibble::tibble(ID=qual_summary@ids, `Original ID`=qual_summary@original_ids), by='ID') %>%
+    dplyr::relocate(ID, `Original ID`) %>%
+    dplyr::group_by(dplyr::across(c('ID', 'Original ID', 'Variable'))) %>%
+    dplyr::summarise('Similar obs.'=sprintf('%i / %i', sum(Pass=='OK'), dplyr::n()),
+                     'Status'=ifelse(sum(Pass=='OK')==dplyr::n(),
+                                     ifelse(failed_only, 'OK', sprintf('\\hyperref[sec:subject%i]{OK}', ID)),
+                                     sprintf('\\hyperref[sec:subject%i]{NOK}', ID)),
+                     .groups='drop')
+kableExtra::kbl(table, booktabs=T, longtable=TRUE, escape=FALSE) %>%
+   kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+   print()
+```
+
+```{r}
+
+for (index in seq_along(qual_summary@ids)) {
+  id <- qual_summary@ids[index]
+  original_id <- qual_summary@original_ids[index]
+  summaryID <- qual_summary@summary %>% dplyr::filter(ID==id)
+  vector <- as.vector(as.matrix(summaryID %>% dplyr::select(-ID)))
+  failed <- !all(vector=='PASS')
+  for (variable in qual_summary@variables) {
+    condition <- !failed_only || (failed_only && failed)
+    if (condition) {
+      plot <- qual_summary %>% getPlot(id, variable)
+      cat('\\newpage\n')
+      cat(sprintf('## Subject %i (original ID: %s){#subject%i}', id, original_id, id))
+      cat('\n\n')
+      cat(sprintf('\\label{sec:subject%i}', id))
+      print(plot + ggplot2::theme_bw())
+    }
+    if (condition && debug_tables) {
+      iTable <- qual_summary %>%
+        getTable(id) %>%
+        dplyr::select(-ID)
+      kableExtra::kbl(iTable, booktabs=T, longtable=TRUE) %>%
+        kableExtra::kable_styling(latex_options=c('repeat_header'), position='left') %>%
+        print()
+    }
+    if (condition) cat('\n\n')
+  }
+}
+```
+

@@ -4,44 +4,85 @@
 #' @param dest destination engine, character
 #' 
 checkDest <- function(dest) {
-  if (!(dest %>% length() == 1 && dest %in% c("RxODE", "rxode2", "mrgsolve"))) {
-    stop("Dest must be RxODE or mrgsolve")
+  if (!(dest %>% length() == 1 && dest %in% c("rxode2", "mrgsolve"))) {
+    stop("Dest must be rxode2 or mrgsolve")
   }
 }
 
 #' Qualify function.
 #' 
-#' @param x campsistrans object, if NULL, NONMEM files must exist
-#' @param model CAMPSIS model
-#' @param dataset CAMPSIS dataset
+#' @param model Campsis model to be qualified
+#' @param dataset Campsis dataset or data frame to be qualified
+#' @param ipred individual predictions to be compared with (=reference results)
 #' @param variables variables to compare
 #' @param tolerance relative tolerance accepted when comparing 2 values
-#' @param outputFolder output folder for qualification
-#' @param reexecuteNONMEM force re-execute NONMEM if results already exist
-#' @param compartments compartment indexes to output, numeric vector
 #' @param dest destination engine to use
 #' @param seed simulation/table export seed, default value is 1
 #' @param settings simulation settings, please note NOCB is enabled by default
+#' @param idref ID reference, "dataset" or "ipred" (other IDs will be ignored)
+#' @param ipred_source source of individual predictions, default is "NONMEM" (informative field)
 #' @return qualification summary
+#' @importFrom dplyr arrange filter
 #' @importFrom campsismod export
 #' @export
-qualify <- function(x, model, dataset, variables, tolerance=1e-2, outputFolder,
-                    reexecuteNONMEM=T, compartments=NULL, dest="rxode2", seed=1, settings=Settings(NOCB(TRUE))) {
+qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
+                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred",
+                    ipred_source="NONMEM") {
   # Check destination engine
   checkDest(dest)
   
   # Dataset to table
-  if (is(dataset, "dataset")) {
+  isCampsisDataset <- is(dataset, "dataset")
+  if (isCampsisDataset) {
     settingsNM <- settings
     settingsNM@nocb@enable <- TRUE # NOCB always TRUE for NONMEM
-    nmTable <- dataset %>% campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
+    table <- dataset %>%
+      campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
   } else {
-    nmTable <- dataset
+    table <- dataset
   }
+  
+  # Ignore IDs mechanism
+  datasetIds <- table$ID %>% unique()
+  ipredIds <- ipred$ID %>% unique()
+  if (idref == "dataset") {
+    refIds <- datasetIds
+  } else if (idref == "ipred") {
+    refIds <- ipredIds
+  } else {
+    stop("idref must be 'dataset' or 'ipred'")
+  }
+  table <- table %>%
+    dplyr::filter(ID %in% refIds) %>%
+    dplyr::arrange(ID, TIME) %>%
+    addSimulationIDColumn()
+  ipred <- ipred %>%
+    dplyr::filter(ID %in% refIds) %>%
+    dplyr::arrange(ID, TIME) %>%
+    addSimulationIDColumn()
 
-  return(qualify_delegate(x=x, model=model, engineTable=dataset, nmTable=nmTable,
-                 variables=variables, tolerance=tolerance, compartments=compartments, outputFolder=outputFolder,
-                 reexecuteNONMEM=reexecuteNONMEM, dest=dest, seed=seed, settings=settings))
+  # Check destination engine
+  checkDest(dest)
+  
+  # Simulate with rxode2 or mrgsolve
+  # If dataset is a Campsis dataset, it will be used as is (e.g. Declare added automatically with mrgsolve, etc.)
+  # If dataset is a table, we give the table with the ID (from 1 to subjects) and ORIGINAL_ID columns
+  campsis <- campsis::simulate(model, dataset=if (isCampsisDataset) {dataset} else {table},
+                               dest=dest, seed=seed, settings=settings, outvars=variables)
+  
+  # Append ORIGINAL_ID
+  campsis <- appendOriginalId(campsis, table)
+  
+  # Fix rxode2 bug
+  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=dataset, dest=dest)
+  
+  # Compare results
+  summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest, ipred_source=ipred_source)
+  
+  # Show if qualification passed or failed
+  cat(ifelse(summary %>% passed(), "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
+  
+  return(summary)
 }
 
 #' Fix very annoying bug in current version of RxODE (> v1.1.0) or rxode2 (2.0.7).
@@ -49,9 +90,9 @@ qualify <- function(x, model, dataset, variables, tolerance=1e-2, outputFolder,
 #' If the model has a lag time and if the dataset does have an observation at time 0,
 #' RxODE still outputs the time 0.
 #' 
-#' @param campsis CAMPSIS output
-#' @param model CAMPSIS model
-#' @param dataset engine table OR CAMPSIS dataset
+#' @param campsis Campsis output
+#' @param model Campsis model
+#' @param dataset engine table OR Campsis dataset
 #' @param dest destination engine
 #' @return the corrected output if the bug was not present if RxODE
 #' @importFrom dplyr filter
@@ -73,9 +114,9 @@ fixRxODEBug <- function(campsis, model, dataset, dest) {
 
 #' Append original ID to simulation output if it exists in the dataset.
 #' 
-#' @param x CAMPSIS output
-#' @param dataset CAMPSIS dataset or data frame
-#' @param dataset engine table OR CAMPSIS dataset
+#' @param x Campsis output
+#' @param dataset Campsis dataset or data frame
+#' @param dataset engine table OR Campsis dataset
 #' @return updated output
 #' @importFrom dplyr distinct left_join relocate select
 appendOriginalId <- function(x, dataset) {
@@ -88,76 +129,32 @@ appendOriginalId <- function(x, dataset) {
   return(x)
 }
 
-#' Qualify function.
-#' 
-#' @param x campsistrans object, if NULL, NONMEM files must exist
-#' @param model CAMPSIS model
-#' @param engineTable engine table OR CAMPSIS dataset
-#' @param nmTable NONMEM dataset, data frame form
-#' @param variables variables to compare
-#' @param tolerance relative tolerance accepted when comparing 2 values
-#' @param outputFolder output folder for qualification
-#' @param reexecuteNONMEM force re-execute NONMEM if results already exist
-#' @param compartments compartment indexes to output, numeric vector
-#' @param dest destination engine to use
-#' @param seed simulation/table export seed, default value is 1
-#' @param settings simulation settings
-#' @return qualification summary
-#' @importFrom tibble add_column as_tibble
-#' @importFrom campsis simulate
-#' @export
-qualify_delegate <- function(x, model, engineTable, nmTable, variables, tolerance, outputFolder,
-                             reexecuteNONMEM=T, compartments=NULL, dest, seed, settings) {
-  # Check destination engine
-  checkDest(dest)
-  
-  # Create output folder if not created yet
-  if (!dir.exists(outputFolder)) {
-    dir.create(outputFolder)
+#' Add simulation ID column (id's starting at 1 and consecutive). Original column ID
+#' will be replaced by the new simulation ID column, after being renamed into
+#' ORIGINAL_ID column.
+#'
+#' @param dataset NONMEM dataset
+#' @param id current identifier column, default is 'ID'
+#' @return updated data frame
+#' @importFrom dplyr arrange group_by group_indices rename_at select
+addSimulationIDColumn <- function(dataset, id="ID") {
+  if ("ID" %in% colnames(dataset) && id != "ID") {
+    dataset <- dataset %>% dplyr::select(-ID)
   }
-
-  # Prepare NONMEM qualification files if CAMPSIS trans object is provided
-  # Otherwise, NONMEM files are supposed to be there
-  if (!is.null(x)) {
-    if (find.package("campsistrans", quiet=TRUE) %>% length() > 0) {
-      eval(expr=parse(text="x %>% campsistrans::prepareNONMEMFiles(dataset=nmTable, variables=variables, compartments=compartments, outputFolder=outputFolder)"))
-    } else {
-      stop("campsistrans package is required to prepare NONMEM files")
-    }
+  # Current ID is renamed into ORIGINAL_ID
+  if (!("ORIGINAL_ID" %in% colnames(dataset))) {
+    dataset <- dataset %>%
+      dplyr::rename_at(.vars=id, .funs=function(x){"ORIGINAL_ID"})
   }
+  # Arrange rows by ORIGINAL_ID
+  dataset <- dataset %>%
+    dplyr::arrange(ORIGINAL_ID)
   
-  # Simulate with RxODE or mrgsolve
-  campsis <- campsis::simulate(model, dataset=engineTable, dest=dest, seed=seed, settings=settings, outvars=variables)
-  
-  # Append ORIGINAL_ID
-  campsis <- appendOriginalId(campsis, engineTable)
-  
-  # Fix RxODE bug
-  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=engineTable, dest=dest)
-  
-  # Retrieve NONMEM results
-  nonmem <- executeNONMEM(outputFolder=outputFolder, reexecuteNONMEM=reexecuteNONMEM)
-  
-  # Compare results
-  summary <- compare(nonmem, campsis, variables=variables, tolerance=tolerance, dest=dest)
-  
-  return(summary)
+  # Add simulation ID column
+  dataset <- dataset %>%
+    tibble::add_column(ID=dataset %>% dplyr::group_by(ORIGINAL_ID) %>%
+                         dplyr::group_indices(), .before="ORIGINAL_ID")
+  # Arrange rows by ID
+  dataset <- dataset %>% dplyr::arrange(ID) 
+  return(dataset)
 }
-
-#' Execute NONMEM. PsN will be called automatically by R. 
-#' Prepared control stream 'model.mod' is executed automatically and NONMEM results
-#' are returned in the form of a data frame.
-#' 
-#' @param outputFolder output folder of prepared NONMEM files
-#' @param reexecuteNONMEM force re-execute NONMEM if results already exist
-#' @export
-executeNONMEM <- function(outputFolder, reexecuteNONMEM=T) {
-  tabFile <- paste0(outputFolder, "/", "output.tab")
-  if (!file.exists(tabFile) || reexecuteNONMEM) {
-    system("cmd.exe", input=paste0("cd ","\"", outputFolder, "\"", " & ", "execute ", "model.mod"))
-    unlink(paste0(outputFolder, "/", "modelfit_dir1"), recursive=TRUE)
-  }
-  nonmem <- read.nonmem(tabFile)[[1]] %>% as.data.frame()
-  return(nonmem)
-}
-

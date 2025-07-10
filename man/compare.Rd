@@ -4,18 +4,27 @@
 \alias{compare}
 \title{Compare NONMEM results with CAMPSIS results, according to the given tolerance.}
 \usage{
-compare(nonmem, campsis, variables, tolerance, dest = "RxODE")
+compare(
+  ipred,
+  campsis,
+  variables,
+  tolerance,
+  dest = "rxode2",
+  ipred_source = "NONMEM"
+)
 }
 \arguments{
-\item{nonmem}{NONMEM results, dataframe}
+\item{ipred}{individual predictions to be compared with (=reference results)}
 
-\item{campsis}{CAMPSIS results, dataframe}
+\item{campsis}{Campsis results, data frame}
 
 \item{variables}{variables to be compared}
 
 \item{tolerance}{comparison tolerance}
 
-\item{dest}{destination engine that was used in CAMPSIS}
+\item{dest}{destination engine that was used in Campsis}
+
+\item{ipred_source}{source of individual predictions, default is "NONMEM" (informative field)}
 }
 \value{
 logical vector

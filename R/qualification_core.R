@@ -17,39 +17,37 @@ areEqual <- function(x, xref, tolerance, id, type) {
 
 #' Compare NONMEM results with CAMPSIS results, according to the given tolerance.
 #'
-#' @param nonmem NONMEM results, dataframe
-#' @param campsis CAMPSIS results, dataframe
+#' @param ipred individual predictions to be compared with (=reference results)
+#' @param campsis Campsis results, data frame
 #' @param variables variables to be compared
 #' @param tolerance comparison tolerance
-#' @param dest destination engine that was used in CAMPSIS
+#' @param dest destination engine that was used in Campsis
+#' @param ipred_source source of individual predictions, default is "NONMEM" (informative field)
 #' @return logical vector
 #' @importFrom dplyr distinct filter mutate pull rename rename_at select
 #' @importFrom ggplot2 aes geom_line geom_point ggplot ggtitle scale_colour_discrete ylab
 #' @importFrom tibble add_column as_tibble
 #' @importFrom campsis obsOnly
 #' @export
-compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
+compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_source="NONMEM") {
   
   # Check destination engine
   checkDest(dest)
   
-  # Retrieve original destination tool from dataframe attributes (default is NONMEM)
-  original_dest <- attr(nonmem, "original_dest")
-  if (is.null(original_dest)) {
-    original_dest <- "NONMEM"
-  }
-  
   # Filtering on observations
-  nonmem_results <- nonmem %>% campsis::obsOnly()
+  ref_results <- ipred %>% campsis::obsOnly()
   campsis_results <- as.data.frame(campsis) %>% campsis::obsOnly()
 
-  # Access ORIGINAL_ID column from CAMPSIS results
+  # Access ORIGINAL_ID column from Campsis results
   # Originally column was accessed from NONMEM results
   # But this is not a good idea because TAB file is formatted (e.g. 1.0510E+04)
   # and therefore the ORIGINAL_ID can't be a big integer or a string
   ids <- unique(campsis_results$ID)
   if ("ORIGINAL_ID" %in% colnames(campsis_results)) {
-    original_ids <- campsis_results %>% dplyr::select(ID, ORIGINAL_ID) %>% dplyr::distinct() %>% dplyr::pull(ORIGINAL_ID)
+    original_ids <- campsis_results %>%
+      dplyr::select(ID, ORIGINAL_ID) %>%
+      dplyr::distinct() %>%
+      dplyr::pull(ORIGINAL_ID)
     if (original_ids %>% length() != ids %>% length()) {
       stop("Incorrect column ORIGINAL_ID")
     }
@@ -57,10 +55,14 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
     original_ids <- character(ids %>% length())
   }
   
+  # Instantiate a new qualification summary object
   qualificationSummary <- new("qualification_summary")
   qualificationSummary@ids <- as.integer(ids)
   qualificationSummary@original_ids <- as.character(original_ids)
   qualificationSummary@variables <- variables
+  qualificationSummary@ipred_source <- ipred_source
+  qualificationSummary@dest <- dest
+  qualificationSummary@tolerance <- tolerance
   
   variablesOfInterest <- variables
   
@@ -74,9 +76,9 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
     index <- which(id==ids)
     original_id <- original_ids[index]
     
-    nonmem_subj <- nonmem_results %>%
+    ref_subj <- ref_results %>%
       dplyr::filter(ID==id) %>%
-      dplyr::mutate(Simulation=original_dest) %>%
+      dplyr::mutate(Simulation=ipred_source) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
     
     campsis_subj <- campsis_results %>%
@@ -84,25 +86,26 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
       dplyr::mutate(Simulation=dest) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
     
-    if (!all(areEqual(nonmem_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
+    if (!all(areEqual(ref_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
       stop(paste0("Times are not identical between NONMEM and CAMPSIS for subject ", id))
     }
     
-    subj <- dplyr::bind_rows(campsis_subj, nonmem_subj)
-    subj <- subj %>% tidyr::gather(key="variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
+    subj <- dplyr::bind_rows(campsis_subj, ref_subj)
+    subj <- subj %>%
+      tidyr::gather(key="Variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
     subj$Pass <- FALSE
     
     # Qualification results summary
     for (output in variablesOfInterest) {
-      nonmemOutput <- subj %>%
-        dplyr::filter(variable==output & Simulation==original_dest) %>%
+      refOutput <- subj %>%
+        dplyr::filter(Variable==output & Simulation==ipred_source) %>%
         dplyr::pull(value)
       
       campsisOutput <- subj %>%
-        dplyr::filter(variable==output & Simulation==dest) %>%
+        dplyr::filter(Variable==output & Simulation==dest) %>%
         dplyr::pull(value)
       
-      sameOutput <- areEqual(nonmemOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
+      sameOutput <- areEqual(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
       if (any(is.na(sameOutput))) {
         stop(paste0("NA's detected in original ID ", original_id))
       }
@@ -113,11 +116,11 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
       }
       
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(variable==output & Simulation==original_dest & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==ipred_source & sameOutput, TRUE, Pass))
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(variable==output & Simulation==dest & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==dest & sameOutput, TRUE, Pass))
     }
-    subj$Pass <-  factor(subj$Pass, levels=c(FALSE, TRUE), labels=c("NOK", "OK"))
+    subj$Pass <-  ifelse(subj$Pass, "OK", "NOK")
     
     # All pass
     allPass <- all(qualification[which(qualification$ID==id), variablesOfInterest]=="PASS")
@@ -126,24 +129,26 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
     # Saving plots
     plots <- list()
     for (output in variablesOfInterest) {
-      data <- subj %>% dplyr::filter(variable==output)
+      data <- subj %>%
+        dplyr::filter(Variable==output) %>%
+        dplyr::mutate(Simulation=factor(Simulation, levels=c(ipred_source, dest)))
       p <- ggplot2::ggplot(data=data, mapping=ggplot2::aes(x=TIME, y=value, group=Simulation)) + 
         ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
-        ggplot2::ggtitle(paste0("Subject ", id, " (", allPass, ")", ifelse(original_id=="", "", paste0(" - ", original_id)))) +
         ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +
-        ggplot2::ylab(output) + ggplot2::scale_colour_discrete(drop=FALSE)
+        ggplot2::ylab(output) +
+        ggplot2::scale_colour_manual(values=c("NOK"="#FF0000", "OK"="#008080"), drop=FALSE)
       plots[[output]] <- p
     }
     qualificationSummary@plots[[as.character(id)]] <- plots
     
     # Saving table output
-    timeCAMPSIS <- paste0("TIME_", dest)
-    timeNONMEM <- paste0("TIME_", original_dest)
+    timeCAMPSIS <- paste0("Time ", dest)
+    timeNONMEM <- paste0("Time ", ipred_source)
     
     tryCatch(
       {
         subjNONMEM <- subj %>%
-          dplyr::filter(Simulation==original_dest) %>%
+          dplyr::filter(Simulation==ipred_source) %>%
           tidyr::spread(Simulation, value) %>% dplyr::rename_at(.vars="TIME", .funs=~timeNONMEM)
         
         subjCAMPSIS <- subj %>% dplyr::filter(Simulation==dest) %>%
@@ -167,3 +172,4 @@ compare <- function(nonmem, campsis, variables, tolerance, dest="RxODE") {
 
   return(qualificationSummary)
 }
+

@@ -3,10 +3,14 @@ library(ggplot2)
 
 context("Qualification of models with inter-occasion variability (IOV) against NONMEM.")
 
-testFolder <- ""
+testFolder <-  file.path(getwd(), test_path())
 skipNONMEMPreparation <- TRUE
 
-source(paste0(testFolder, "testUtils.R"))
+# Load utilities
+source(file.path(testFolder, "testUtils.R"))
+
+# Activate suite
+activateSuite(enableSuite)
 
 getTestDescription <- function(x) {
   if (isQualificationSuiteProvided()) {
@@ -17,7 +21,7 @@ getTestDescription <- function(x) {
 }
 
 test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on ALAG1 works as expected")), {
-  ctlPath <- paste0(testFolder, "resources/", "advan4_trans4_iovalag1/model.mod")
+  ctlPath <- file.path(testFolder, "resources", "advan4_trans4_iovalag1" , "model.mod")
   modelName <- "advan4_trans4_iovalag1"
 
   if (!isQualificationSuiteProvided()) {
@@ -44,7 +48,7 @@ test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on ALAG1 
 })
 
 test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on F1 works as expected")), {
-  ctlPath <- paste0(testFolder, "resources/", "advan4_trans4_iovf1/model.mod")
+  ctlPath <- file.path(testFolder, "resources", "advan4_trans4_iovf1", "model.mod")
   modelName <- "advan4_trans4_iovf1"
 
   if (!isQualificationSuiteProvided()) {
@@ -69,7 +73,7 @@ test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on F1 wor
 })
 
 test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on KA works as expected")), {
-  ctlPath <- paste0(testFolder, "resources/", "advan4_trans4_iovka/model.mod")
+  ctlPath <- file.path(testFolder, "resources", "advan4_trans4_iovka", "model.mod")
   modelName <- "advan4_trans4_iovka"
 
   if (!isQualificationSuiteProvided()) {
@@ -94,7 +98,7 @@ test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on KA wor
 })
 
 test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on CL works as expected")), {
-  ctlPath <- paste0(testFolder, "resources/", "advan4_trans4_iovcl/model.mod")
+  ctlPath <- file.path(testFolder, "resources", "advan4_trans4_iovcl", "model.mod")
   modelName <- "advan4_trans4_iovcl"
 
   if (!isQualificationSuiteProvided()) {
