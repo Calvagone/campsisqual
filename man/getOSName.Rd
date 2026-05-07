@@ -7,7 +7,7 @@
 getOSName(short = FALSE)
 }
 \arguments{
-\item{short}{if TRUE, returns a short version of the OS name (e.g., "Win10" for Windows 10)}
+\item{short}{if TRUE, returns a short version of the OS name (e.g., "Win11" for Windows 11)}
 }
 \value{
 the OS name

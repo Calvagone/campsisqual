@@ -43,3 +43,4 @@ vignettes/*.pdf
 /tests/testthat/qualification_results/
 
 /export/*
+.positai

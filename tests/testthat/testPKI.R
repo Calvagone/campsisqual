@@ -6,6 +6,8 @@ test_that("PKI package works as expected to read certificates", {
   caCert <-  PKI::PKI.load.cert(what=getCACertificate(), format="PEM")
   info <- getCertificateInformation(caCert)
   subj <- list(C="FR", ST="Lyonnais", L="Chazay d'Azergues", O="Calvagone CA", OU="IT", CN="Campsis suite qualification (CA)", emailAddress="campsis@calvagone.com")
+  print("OS name:")
+  print(getOSName())
   
   expect_equal(info$subject, subj)
   expect_equal(info$issuer, subj)
