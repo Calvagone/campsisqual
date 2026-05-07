@@ -128,19 +128,40 @@ bindPackageAndVersion <- function(x, package) {
                x %>% summariseResults()))
 }
 
-#'
 #' Get OS name.
 #' 
-#' @param short if TRUE, returns a short version of the OS name (e.g., "Win10" for Windows 10)
+#' @param short if TRUE, returns a short version of the OS name (e.g., "Win11" for Windows 11)
 #' @return the OS name
 #' @export
 getOSName <- function(short=FALSE) {
-  os <- paste(Sys.info()[["sysname"]], Sys.info()[["release"]])
-  if (short) {
-    os <- gsub(" ", "_", x=os)
-    os <- gsub("Windows", "Win", x=os)
-    os <- gsub("Win_10", "Win10", x=os)
+  # 1. Get basic info
+  sys <- Sys.info()
+  sysname <- sys[["sysname"]]
+  release <- sys[["release"]]
+  
+  # 2. Refined Windows detection
+  if (sysname == "Windows") {
+    # Extract build number
+    build <- as.numeric(gsub(".*?([0-9]+).*", "\\1", sys[["version"]]))
+    
+    if (!is.na(build) && build >= 22000) {
+      # For Win 11, we manually set the name and ignore the "10" in release
+      os <- paste("Windows 11", sys[["machine"]]) 
+    } else {
+      # For Win 10 and older, use the standard release string
+      os <- paste("Windows", release, sys[["machine"]])
+    }
+  } else {
+    # Fallback for macOS/Linux
+    os <- paste(sysname, release)
   }
+  
+  # 3. Handle the "short" formatting
+  if (short) {
+    os <- gsub("Windows", "Win", x=os)
+    os <- gsub(" ", "", x=os) 
+  }
+  
   return(os)
 }
 

@@ -1,3 +1,7 @@
+# campsisqual 1.4.1
+
+* Update method getOSName #18
+
 # campsisqual 1.4.0
 
 * Rework model qualification procedure #15
