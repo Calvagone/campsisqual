@@ -1,5 +1,6 @@
 library(testthat)
 library(ggplot2)
+library(campsis)
 
 context("Qualification of models with inter-occasion variability (IOV) against NONMEM.")
 
@@ -11,20 +12,12 @@ source(file.path(getwd(), test_path(), "testUtils.R"))
 # Activate suite
 activate_suite(ENABLE_SUITE)
 
-get_test_description <- function(x) {
-  if (is_qualification_suite_provided()) {
-    return(x)
-  } else {
-    return(sprintf("%s - NOT RUN", x))
-  }
-}
-
-test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on ALAG1 works as expected")), {
+test_that("ADVAN4 TRANS4 model with IOV on ALAG1 works as expected", {
   ctlPath <- file.path(getwd(), test_path(), "resources", "advan4_trans4_iovalag1" , "model.mod")
   modelName <- "advan4_trans4_iovalag1"
 
   if (!is_qualification_suite_provided()) {
-    return(TRUE)
+    testthat::skip("Qualification suite not provided")
   }
 
   dataset <- Dataset(3) %>%
@@ -46,7 +39,7 @@ test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on AL
   }
 })
 
-test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on F1 works as expected")), {
+test_that("ADVAN4 TRANS4 model with IOV on F1 works as expected", {
   ctlPath <- file.path(getwd(), test_path(), "resources", "advan4_trans4_iovf1", "model.mod")
   modelName <- "advan4_trans4_iovf1"
 
@@ -71,12 +64,12 @@ test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on F1
   }
 })
 
-test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on KA works as expected")), {
+test_that("ADVAN4 TRANS4 model with IOV on KA works as expected", {
   ctlPath <- file.path(getwd(), test_path(), "resources", "advan4_trans4_iovka", "model.mod")
   modelName <- "advan4_trans4_iovka"
 
   if (!is_qualification_suite_provided()) {
-    return(TRUE)
+    testthat::skip("Qualification suite not provided")
   }
 
   dataset <- Dataset(3) %>%
@@ -96,12 +89,12 @@ test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on KA
   }
 })
 
-test_that(get_test_name(get_test_description("ADVAN4 TRANS4 model with IOV on CL works as expected")), {
+test_that("ADVAN4 TRANS4 model with IOV on CL works as expected", {
   ctlPath <- file.path(getwd(), test_path(), "resources", "advan4_trans4_iovcl", "model.mod")
   modelName <- "advan4_trans4_iovcl"
 
   if (!is_qualification_suite_provided()) {
-    return(TRUE)
+    testthat::skip("Qualification suite not provided")
   }
 
   dataset <- Dataset(3) %>%

@@ -1,5 +1,6 @@
 library(testthat)
 library(ggplot2)
+library(campsis)
 
 context("Qualification of the Campsis model suite against NONMEM")
 
@@ -86,23 +87,30 @@ generate_model_indexes <- function(pks) {
   return(modelIndexes)
 }
 
-if (!is_qualification_suite_provided()) {
-  return(TRUE)
-}
-
 pks <- get_all_model_names()
 modelIndexes <- generate_model_indexes(pks)
 
-qualify_modelSuiteModel <- function(shortName) {
+qualify_model_suite_model <- function(shortName) {
   dataset <- generate_dataset_based_on_model_name(shortName)
+  results <- NULL
   for (engine in TEST_ENGINES) {
     qual <- qualify_model(ctlPath=NULL, modelName=shortName, dataset=dataset,
                          variables="CONC", dest=engine, skipNM=TRUE)
-    expect_true(qual %>% passed())
+    results <- results %>%
+      append(qual %>% passed())
   }
+  return(results)
 }
 
-for (index in modelIndexes) {
-  shortName <- pks[index]
-  test_that(get_test_name(sprintf("Qualification of model `%s' against NONMEM is successful", shortName)), {qualify_modelSuiteModel(shortName=shortName)})
-}
+test_that("Qualification of the model suite against NONMEM is successful", {
+  if (!is_qualification_suite_provided()) {
+    testthat::skip("Qualification suite not provided")
+  }
+
+  for (index in modelIndexes) {
+    shortName <- pks[index]
+    results <- qualify_model_suite_model(shortName = shortName)
+    expect_true(length(results) > 0)
+    expect_all_true(results)
+  }
+})
