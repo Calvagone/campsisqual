@@ -1,3 +1,9 @@
+# campsisqual 1.5.0
+
+* Migrate campsisqual to snake_case #20
+* Remove dependency to Campsis #21
+* Standardise tests in package #22
+
 # campsisqual 1.4.1
 
 * Update method getOSName #18
