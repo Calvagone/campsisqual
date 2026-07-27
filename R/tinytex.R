@@ -4,7 +4,7 @@
 #' @return TRUE if TinyTeX is installed correctly, FALSE otherwise
 #' @importFrom tinytex pdflatex
 #' @export
-checkTinyTEXInstallation <- function() {
+check_tinytex_installation <- function() {
   template <- "
 \\documentclass{article}
 \\begin{document}

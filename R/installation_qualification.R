@@ -227,7 +227,7 @@ run_qualification <- function(packages, fullname, initials=NULL, output_dir=getw
   if (length(find.package("rxode2", quiet=TRUE))==0) stop("rxode2 not installed")
   
   # Check tinyTEX installation
-  if (!checkTinyTEXInstallation()) {
+  if (!check_tinytex_installation()) {
     stop("TinyTeX is not properly installed. Please install it using tinytex::install_tinytex()")
   }
   

@@ -36,7 +36,7 @@ setClass(
 )
 
 #_______________________________________________________________________________
-#----                             getPlot                                   ----
+#----                            get_plot                                   ----
 #_______________________________________________________________________________
 
 #' Get qualification plot for given subject ID and variable.
@@ -46,24 +46,24 @@ setClass(
 #' @param variable compared variable
 #' @return a plot
 #' @export
-#' @rdname getPlot
-getPlot <- function(summary, id, variable) {
+#' @rdname get_plot
+get_plot <- function(summary, id, variable) {
   stop("No default function is provided")
 }
 
-setGeneric("getPlot", function(summary, id, variable) {
-  standardGeneric("getPlot")
+setGeneric("get_plot", function(summary, id, variable) {
+  standardGeneric("get_plot")
 })
 
-#' @rdname getPlot
-setMethod("getPlot", signature = c("qualification_summary", "numeric", "character"), definition = function(summary, id, variable) {
+#' @rdname get_plot
+setMethod("get_plot", signature = c("qualification_summary", "numeric", "character"), definition = function(summary, id, variable) {
   id <- as.character(id)
   list <- summary@plots[[id]]
   return(list[[variable]])
 })
 
 #_______________________________________________________________________________
-#----                             getTable                                  ----
+#----                            get_table                                  ----
 #_______________________________________________________________________________
 
 #' Get qualification results (table form) for given subject ID.
@@ -72,17 +72,17 @@ setMethod("getPlot", signature = c("qualification_summary", "numeric", "characte
 #' @param id subject ID
 #' @return a data frame with all variables being compared
 #' @export
-#' @rdname getTable
-getTable <- function(summary, id) {
+#' @rdname get_table
+get_table <- function(summary, id) {
   stop("No default function is provided")
 }
 
-setGeneric("getTable", function(summary, id) {
-  standardGeneric("getTable")
+setGeneric("get_table", function(summary, id) {
+  standardGeneric("get_table")
 })
 
-#' @rdname getTable
-setMethod("getTable", signature = c("qualification_summary", "numeric"), definition = function(summary, id) {
+#' @rdname get_table
+setMethod("get_table", signature = c("qualification_summary", "numeric"), definition = function(summary, id) {
   id <- as.character(id)
   table <- summary@tables[[id]]
   return(table)

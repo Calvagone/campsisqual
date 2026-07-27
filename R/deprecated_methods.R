@@ -64,7 +64,6 @@ getCertificateInformation <- function(cert) {
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #' 
-#' @inheritParams get_ca_certificate
 #' @return CA certificate, character vector
 #' @export
 #' @rdname getCACertificate
@@ -89,3 +88,59 @@ areEqual <- function(x, xref, tolerance, id, type) {
   are_equal(x = x, xref = xref, tolerance = tolerance, id = id, type = type)
 }
 
+#' Get qualification plot for given subject ID and variable.
+#' 
+#' `getPlot()` is deprecated in favor of `get_plot()`.
+#' 
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' 
+#' @inheritParams get_plot
+#' @return a plot
+#' @export
+#' @rdname getPlot
+getPlot <- function(summary, id, variable) {
+  lifecycle::deprecate_warn("1.5.0", "getPlot()", "get_plot()")
+  get_plot(summary = summary, id = id, variable = variable)
+}
+
+setGeneric("getPlot", function(summary, id, variable) {
+  lifecycle::deprecate_warn("1.5.0", "getPlot()", "get_plot()")
+  get_plot(summary = summary, id = id, variable = variable)
+})
+
+#' Get qualification plot for given subject ID and variable.
+#' 
+#' `getTable()` is deprecated in favor of `get_table()`.
+#' 
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' 
+#' @inheritParams get_table
+#' @return a data frame with all variables being compared
+#' @export
+#' @rdname getTable
+getTable <- function(summary, id) {
+  lifecycle::deprecate_warn("1.5.0", "getTable()", "get_table()")
+  get_table(summary = summary, id = id)
+}
+
+setGeneric("getTable", function(summary, id, variable) {
+  lifecycle::deprecate_warn("1.5.0", "getTable()", "get_table()")
+  get_table(summary = summary, id = id)
+})
+
+#' Check TinyTeX installation.
+#' 
+#' `checkTinyTEXInstallation()` is deprecated in favor of `check_tinytex_installation()`.
+#' 
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' 
+#' @return TRUE if TinyTeX is installed correctly, FALSE otherwise
+#' @export
+#' @rdname checkTinyTEXInstallation
+checkTinyTEXInstallation <- function() {
+  lifecycle::deprecate_warn("1.5.0", "checkTinyTEXInstallation()", "check_tinytex_installation()")
+  check_tinytex_installation()
+}
