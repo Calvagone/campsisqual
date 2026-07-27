@@ -69,3 +69,7 @@ Collate:
     'risk_metrics.R'
     'deprecated_methods.R'
 Config/roxygen2/version: 8.0.0
+Remotes:
+  Calvagone/campsismod@snake_case
+  Calvagone/campsis@snake_case
+  Calvagone/campsisnca@develop
