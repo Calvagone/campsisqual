@@ -233,7 +233,7 @@ generateModelSuite <- function() {
 
 generateModelSuiteFiles <- function() {
   pks <- generateModelSuite() %>%
-    discard3CptZoModels()
+    discard_3cpt_zo_models()
   command <- "execute"
   
   for (pk in pks@list) {
@@ -303,7 +303,7 @@ generatePKForSimulation <- function(pk) {
   }
   
   # Create PK folder
-  pkFolder <- paste0(testFolder, "qualification/", shortName, "/")
+  pkFolder <- paste0(test_folder, "qualification/", shortName, "/")
   dir.create(file.path(pkFolder), showWarnings=FALSE)
   
   # Create NONMEM folder

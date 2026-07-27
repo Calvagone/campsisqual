@@ -96,10 +96,11 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
 #' @param dest destination engine
 #' @return the corrected output if the bug was not present if RxODE
 #' @importFrom dplyr filter
+#' @importFrom campsis get_times
 fix_rxode_bug <- function(campsis, model, dataset, dest) {
   if (dest %in% c("RxODE", "rxode2")) {
     if (is(dataset, "dataset")) {
-      times <- dataset %>% getTimes()
+      times <- dataset %>% campsis::get_times()
       
       # If LAG is found in model & time 0 does not exists in observations
       # We remove time 0 from the output

@@ -3,14 +3,14 @@ library(ggplot2)
 
 context("Qualification of the NONMEM subroutines, implemented in Campsis, against NONMEM")
 
-testFolder <-  file.path(getwd(), test_path())
-skipNONMEMPreparation <- TRUE
+test_folder <-  file.path(getwd(), test_path())
+SKIP_NONMEM_PREPARATION <- TRUE
 
 # Load utilities
-source(file.path(testFolder, "testUtils.R"))
+source(file.path(test_folder, "testUtils.R"))
 
 # Activate suite
-activateSuite(enableSuite)
+activate_suite(ENABLE_SUITE)
 
 advanFilename <- function(advan, trans, ext=".mod") {
   return(paste0("advan", advan, "_trans", trans, ext))
@@ -25,7 +25,7 @@ createDataset <- function() {
   return(dataset)
 }
 
-getCtlPath <- function(advan, trans, skipNM) {
+get_ctl_path <- function(advan, trans, skipNM) {
   if (skipNM) {
     return(NULL)
   } else {
@@ -34,107 +34,107 @@ getCtlPath <- function(advan, trans, skipNM) {
 }
 
 qualifySubroutine <- function(advan, trans) {
-  if (!isQualificationSuiteProvided()) {
+  if (!is_qualification_suite_provided()) {
     return(TRUE)
   }
-  option <- getCampsisqualOption()
+  option <- get_campsisqual_option()
   qualSuite <- option$QUALIFICATION_SUITE
   modelName <- advanFilename(advan, trans, ext="")
-  for (engine in testEngines) {
-    qual <- qualifyModel(ctlPath=getCtlPath(advan, trans, skipNM=skipNONMEMPreparation), modelName=modelName,
+  for (engine in TEST_ENGINES) {
+    qual <- qualify_model(ctlPath=get_ctl_path(advan, trans, skipNM=SKIP_NONMEM_PREPARATION), modelName=modelName,
                          dataset=createDataset(), dest=engine, variables="CP", updateDataset=TRUE,
-                         skipNM=skipNONMEMPreparation)
+                         skipNM=SKIP_NONMEM_PREPARATION)
     expect_true(qual %>% passed())
   }
 }
 
-getTestDescription <- function(routine) {
-  if (isQualificationSuiteProvided()) {
+get_test_description <- function(routine) {
+  if (is_qualification_suite_provided()) {
     return(sprintf("%s model works as expected", routine))
   } else {
     return(sprintf("%s model works as expected - NOT RUN", routine))
   }
 }
 
-test_that(getTestName(getTestDescription("ADVAN1 TRANS1")), {
+test_that(get_test_name(get_test_description("ADVAN1 TRANS1")), {
   advan <- 1
   trans <- 1
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN1 TRANS2")), {
+test_that(get_test_name(get_test_description("ADVAN1 TRANS2")), {
   advan <- 1
   trans <- 2
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN2 TRANS1")), {
+test_that(get_test_name(get_test_description("ADVAN2 TRANS1")), {
   advan <- 2
   trans <- 1
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN2 TRANS2")), {
+test_that(get_test_name(get_test_description("ADVAN2 TRANS2")), {
   advan <- 2
   trans <- 2
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN3 TRANS1")), {
+test_that(get_test_name(get_test_description("ADVAN3 TRANS1")), {
   advan <- 3
   trans <- 1
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN3 TRANS3")), {
+test_that(get_test_name(get_test_description("ADVAN3 TRANS3")), {
   advan <- 3
   trans <- 3
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN3 TRANS4")), {
+test_that(get_test_name(get_test_description("ADVAN3 TRANS4")), {
   advan <- 3
   trans <- 4
   return(qualifySubroutine(advan, trans))
 })
 
 # Disabled because TRANS5 subroutine models are not properly translated by Pharmpy v0.46
-# test_that(getTestName(getTestDescription("ADVAN3 TRANS5")), {
+# test_that(get_test_name(get_test_description("ADVAN3 TRANS5")), {
 #   # advan <- 3
 #   # trans <- 5
 # })
 
-test_that(getTestName(getTestDescription("ADVAN4 TRANS1")), {
+test_that(get_test_name(get_test_description("ADVAN4 TRANS1")), {
   advan <- 4
   trans <- 1
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN4 TRANS3")), {
+test_that(get_test_name(get_test_description("ADVAN4 TRANS3")), {
   advan <- 4
   trans <- 3
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN4 TRANS4")), {
+test_that(get_test_name(get_test_description("ADVAN4 TRANS4")), {
   advan <- 4
   trans <- 4
   return(qualifySubroutine(advan, trans))
 })
 
 # Disabled because TRANS5 subroutine models are not properly translated by Pharmpy v0.46
-# test_that(getTestName(getTestDescription("ADVAN4 TRANS5")), {
+# test_that(get_test_name(get_test_description("ADVAN4 TRANS5")), {
 #   # advan <- 4
 #   # trans <- 5
 # })
 
-test_that(getTestName(getTestDescription("ADVAN11 TRANS4")), {
+test_that(get_test_name(get_test_description("ADVAN11 TRANS4")), {
   advan <- 11
   trans <- 4
   return(qualifySubroutine(advan, trans))
 })
 
-test_that(getTestName(getTestDescription("ADVAN12 TRANS4")), {
+test_that(get_test_name(get_test_description("ADVAN12 TRANS4")), {
   advan <- 12
   trans <- 4
   return(qualifySubroutine(advan, trans))

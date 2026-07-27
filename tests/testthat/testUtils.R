@@ -2,14 +2,14 @@
 # setwd("C:/prj/campsisqual/")
 # roxygen2::roxygenise()
 # setwd("C:/prj/campsisqual/tests/")
-# testFolder <<- "C:/prj/campsisqual/tests/testthat/"
+# test_folder <<- "C:/prj/campsisqual/tests/testthat/"
 # reticulate::use_python("C:/PsN-5.0.0/python/python-3.7.7.amd64/python.exe", required=TRUE)
 # reticulate::py_config()
 # version <- pharmpy["__version__"]
 
-testEngines <- c("mrgsolve", "rxode2")
-reexecuteNONMEM <- FALSE
-enableSuite <- FALSE
+TEST_ENGINES <- c("mrgsolve", "rxode2")
+REEXECUTE_NONMEM <- FALSE
+ENABLE_SUITE <- FALSE
 
 #'
 #' Qualify model.
@@ -28,13 +28,13 @@ enableSuite <- FALSE
 #' @param skipNM skip NONMEM model preparation
 #' @return qualification object
 #'
-qualifyModel <- function(ctlPath, modelName, dataset, modelfun=NULL, dest, variables,
+qualify_model <- function(ctlPath, modelName, dataset, modelfun=NULL, dest, variables,
                          seed=1, settings=Settings(NOCB(TRUE)), updateDataset=FALSE, tolerance=1e-2,
                          skipNM=TRUE) {
-  if (!isQualificationSuiteProvided()) {
+  if (!is_qualification_suite_provided()) {
     stop("No qualification suite provided")
   }
-  option <- getCampsisqualOption()
+  option <- get_campsisqual_option()
   qualSuite <- option$QUALIFICATION_SUITE
   
   modelSuiteFolder <- file.path(qualSuite, "model_suite")
@@ -99,12 +99,12 @@ qualifyModel <- function(ctlPath, modelName, dataset, modelfun=NULL, dest, varia
   return(qual)
 }
 
-getTestName <- function(name) {
-  return(paste0(name, " (", paste0(testEngines, collapse="/"), ")"))
+get_test_name <- function(name) {
+  return(paste0(name, " (", paste0(TEST_ENGINES, collapse="/"), ")"))
 }
 
-isQualificationSuiteProvided <- function() {
-  option <- getCampsisqualOption()
+is_qualification_suite_provided <- function() {
+  option <- get_campsisqual_option()
   if (is.null(option)) {
     return(FALSE)
   } else {
@@ -113,11 +113,11 @@ isQualificationSuiteProvided <- function() {
   }
 }
 
-getCampsisqualOption <- function() {
+get_campsisqual_option <- function() {
   return(getOption("campsisqual.options"))
 } 
 
-activateSuite <- function(enable) {
+activate_suite <- function(enable) {
   if (enable) {
     basePath <- "<PATH_TO_SUITE>"
     qualOptions <- list()
