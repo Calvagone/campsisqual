@@ -4,7 +4,7 @@
 \alias{getTable}
 \title{Get qualification plot for given subject ID and variable.}
 \usage{
-getTable(summary, id, variable)
+getTable(summary, id)
 }
 \arguments{
 \item{summary}{summary object}
