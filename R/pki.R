@@ -5,16 +5,16 @@
 #' @return certificate information
 #' @importFrom PKI PKI.get.cert.info
 #' @export
-getCertificateInformation <- function(cert) {
+get_certificate_information <- function(cert) {
 
   certInfo <- PKI::PKI.get.cert.info(cert)
-  certInfo$subject <- subjectToNamedVector(certInfo$subject)
-  certInfo$issuer <- subjectToNamedVector(certInfo$issuer)
+  certInfo$subject <- subject_to_named_vector(certInfo$subject)
+  certInfo$issuer <- subject_to_named_vector(certInfo$issuer)
   
   return(certInfo)
 }
 
-subjectToNamedVector <- function(x) {
+subject_to_named_vector <- function(x) {
   tmp <- strsplit(x, "/")[[1]]
   tmp <- tmp[tmp != ""]
   tmp <- strsplit(tmp, "=")
@@ -33,7 +33,7 @@ subjectToNamedVector <- function(x) {
 #' @return CA certificate, character vector
 #' @export
 #'
-getCACertificate <- function() {
+get_ca_certificate <- function() {
   pem <- "-----BEGIN CERTIFICATE-----
 MIIGRTCCBC2gAwIBAgIUasdur7jIuVoeEC5zqjzPtf5XO/cwDQYJKoZIhvcNAQEL
 BQAwgbExCzAJBgNVBAYTAkZSMREwDwYDVQQIDAhMeW9ubmFpczEaMBgGA1UEBwwR

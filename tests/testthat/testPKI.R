@@ -3,8 +3,8 @@ library(testthat)
 context("Qualification of the Campsis suite requires PKI package to sign the report")
 
 test_that("PKI package works as expected to read certificates", {
-  caCert <-  PKI::PKI.load.cert(what=getCACertificate(), format="PEM")
-  info <- getCertificateInformation(caCert)
+  caCert <-  PKI::PKI.load.cert(what=get_ca_certificate(), format="PEM")
+  info <- get_certificate_information(caCert)
   subj <- list(C="FR", ST="Lyonnais", L="Chazay d'Azergues", O="Calvagone CA", OU="IT", CN="Campsis suite qualification (CA)", emailAddress="campsis@calvagone.com")
 
   expect_equal(info$subject, subj)

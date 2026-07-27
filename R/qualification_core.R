@@ -9,7 +9,7 @@
 #' @return logical vector
 #' @importFrom assertthat assert_that
 #' @export
-areEqual <- function(x, xref, tolerance, id, type) {
+are_equal <- function(x, xref, tolerance, id, type) {
   assertthat::assert_that(length(x)==length(xref), msg=sprintf("x and xref (%s) do not have the same length (ID=%s)", type, as.character(id)))
   relativeChange <- (x - xref)/xref
   return(abs(relativeChange) < tolerance | (x==0 & xref==0))
@@ -86,7 +86,7 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
       dplyr::mutate(Simulation=dest) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
     
-    if (!all(areEqual(ref_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
+    if (!all(are_equal(ref_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
       stop(paste0("Times are not identical between NONMEM and CAMPSIS for subject ", id))
     }
     
@@ -105,7 +105,7 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
         dplyr::filter(Variable==output & Simulation==dest) %>%
         dplyr::pull(value)
       
-      sameOutput <- areEqual(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
+      sameOutput <- are_equal(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
       if (any(is.na(sameOutput))) {
         stop(paste0("NA's detected in original ID ", original_id))
       }

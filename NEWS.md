@@ -48,7 +48,7 @@
 
 # campsisqual 1.1.0
 
-* Improve areEqual method (for troubleshooting)
+* Improve are_equal method (for troubleshooting)
 * Review model suite qualification
 * Update github actions workflow
 

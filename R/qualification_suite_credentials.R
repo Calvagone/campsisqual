@@ -41,10 +41,10 @@ Credentials <- function(cert, key, passphrase) {
   pkiClientCertificate <- PKI::PKI.load.cert(what=certificate, format="PEM")
   
   # Load CA certificate
-  pkiCACertificate <-  PKI::PKI.load.cert(what=getCACertificate(), format="PEM")
+  pkiCACertificate <-  PKI::PKI.load.cert(what=get_ca_certificate(), format="PEM")
   
   # Check validity
-  certificateInfo <- getCertificateInformation(pkiClientCertificate)
+  certificateInfo <- get_certificate_information(pkiClientCertificate)
   if (Sys.time() > certificateInfo$validity[2]) {
     stop("Client certificate has expired. Please contact Calvagone.")
   }
