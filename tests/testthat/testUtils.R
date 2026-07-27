@@ -73,8 +73,8 @@ qualifyModel <- function(ctlPath, modelName, dataset, modelfun=NULL, dest, varia
   
   # Update dataset (compartment index of observations is adapted automatically)
   if (updateDataset) {
-    index <- model %>% getCompartmentIndex("CENTRAL")
-    dataset <- dataset %>% setDefaultObsCmt(index)
+    index <- model %>% get_compartment_index("CENTRAL")
+    dataset <- dataset %>% set_default_obs_cmt(index)
   }
   
   # Read individual predictions

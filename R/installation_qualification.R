@@ -5,7 +5,7 @@
 #' @param raw raw results
 #' @return cleaned results
 #' @importFrom dplyr as_tibble group_by rename summarise
-cleanPackageResults <- function(raw) {
+clean_package_results <- function(raw) {
   retValue <- raw %>%
     dplyr::as_tibble() %>%
     dplyr::rename(Test = test) %>%
@@ -28,7 +28,7 @@ cleanPackageResults <- function(raw) {
 #' @param results results
 #' @return summarised results
 #' @importFrom dplyr summarise_if
-summariseResults <- function(results) {
+summarise_results <- function(results) {
   return(results %>% dplyr::summarise_if(is.numeric, sum))
 }
 
@@ -38,7 +38,7 @@ summariseResults <- function(results) {
 #' @param x data frame
 #' @return printed kable
 #' @importFrom kableExtra kbl kable_styling column_spec
-printSummaryKable <- function(x) {
+print_summary_kable <- function(x) {
   return(x %>% kableExtra::kbl(booktabs=T) %>%
            kableExtra::kable_styling(full_width=T, latex_options=c("striped", "hold_position")) %>%
            kableExtra::column_spec(1, width="2.6cm") %>%
@@ -51,7 +51,7 @@ printSummaryKable <- function(x) {
 #' @param x data frame
 #' @return printed kable
 #' @importFrom kableExtra kbl kable_styling column_spec
-printKable <- function(x) {
+print_kable <- function(x) {
   return(x %>% kableExtra::kbl(booktabs=T) %>%
            kableExtra::kable_styling(full_width=T, latex_options=c("striped", "hold_position")) %>%
            kableExtra::column_spec(1, width = "8cm") %>% print())
@@ -63,7 +63,7 @@ printKable <- function(x) {
 #' @param results results
 #' @return TRUE or FALSE
 #' @importFrom dplyr summarise_if
-qualificationPassed <- function(results) {
+qualification_passed <- function(results) {
   row <- results %>% dplyr::summarise_if(is.numeric, sum)
   retValue <- TRUE
   if (row$Failed > 0) {
@@ -86,11 +86,11 @@ qualificationPassed <- function(results) {
 #' @return nothing
 #' @importFrom dplyr nest_by
 #' @importFrom purrr pwalk
-writeResults <- function(results) {
+write_results <- function(results) {
   nestedResults <- results %>%
     dplyr::nest_by(file, context, .key = "Results") %>%
     dplyr::nest_by(file, .key = "Categories")
-  return(purrr::pwalk(list(nestedResults$file, nestedResults$Categories), writeFileResults))
+  return(purrr::pwalk(list(nestedResults$file, nestedResults$Categories), write_file_results))
 }
 
 #'
@@ -101,9 +101,9 @@ writeResults <- function(results) {
 #' @param ... extra arguments
 #' @return nothing
 #' @importFrom purrr pwalk
-writeFileResults <- function(file, categories, ...) {
+write_file_results <- function(file, categories, ...) {
   #cat("###", file, "\n")
-  return(purrr::pwalk(list(categories$context, categories$Results, file), writeCategoryResults))
+  return(purrr::pwalk(list(categories$context, categories$Results, file), write_category_results))
 }
 
 #'
@@ -115,7 +115,7 @@ writeFileResults <- function(file, categories, ...) {
 #' @param ... extra arguments
 #' @return nothing
 #' @importFrom kableExtra kbl kable_styling column_spec
-writeCategoryResults <- function(category, tests, file, ...) {
+write_category_results <- function(category, tests, file, ...) {
   cat(paste0("**", category, "**\n\n"))
   cat("*Script: ", file, "*\n")
   return(tests %>% kableExtra::kbl(booktabs=T, longtable=T) %>%
@@ -123,9 +123,9 @@ writeCategoryResults <- function(category, tests, file, ...) {
            kableExtra::column_spec(1, width = "8cm") %>% print())
 }
 
-bindPackageAndVersion <- function(x, package) {
+bind_package_and_version <- function(x, package) {
   return(cbind("Package"=package, "Version"=getNamespaceVersion(package) %>% as.character(),
-               x %>% summariseResults()))
+               x %>% summarise_results()))
 }
 
 #' Get OS name.
@@ -133,7 +133,7 @@ bindPackageAndVersion <- function(x, package) {
 #' @param short if TRUE, returns a short version of the OS name (e.g., "Win11" for Windows 11)
 #' @return the OS name
 #' @export
-getOSName <- function(short=FALSE) {
+get_os_name <- function(short=FALSE) {
   # 1. Get basic info
   sys <- Sys.info()
   sysname <- sys[["sysname"]]
@@ -173,7 +173,7 @@ getOSName <- function(short=FALSE) {
 #' @importFrom dplyr group_by summarise
 #' @importFrom tibble tibble
 #' @importFrom purrr map_chr discard
-collectPackageWarnings <- function(x) {
+collect_package_warnings <- function(x) {
   assertthat::assert_that(is(x, "testthat_results"), msg="x must be of type 'testthat_results'")
   warningMessages <- NULL
   for (i in 1:length(x)) {
@@ -214,7 +214,7 @@ collectPackageWarnings <- function(x) {
 #' @importFrom tictoc tic toc
 #' @importFrom PKI PKI.load.cert PKI.verifyCA
 #' @export
-runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL,
+run_qualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL,
                              cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
   if (!all(packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis"))) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
@@ -231,7 +231,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
     stop("TinyTeX is not properly installed. Please install it using tinytex::install_tinytex()")
   }
   
-  isWindows <- tolower(getOSName()) %>% startsWith("win")
+  isWindows <- tolower(get_os_name()) %>% startsWith("win")
   if (isWindows) {
     defaultPath <- "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"
     if (file.exists(defaultPath)) {
@@ -240,16 +240,16 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
   }
   
   tictoc::tic()
-  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite,
+  results <- run_qualification_core(packages=packages, qualification_suite=qualification_suite,
                                   cpu=cpu, skip_vdiffr=skip_vdiffr, skip_python=skip_python)
   if (!is.null(qualification_suite)) {
-    report <- renderReport(results=results, packages=packages, fullname=fullname, initials=initials,
+    report <- render_report(results=results, packages=packages, fullname=fullname, initials=initials,
                            output_dir=output_dir, qualification_suite=qualification_suite)
   }
   tictoc::toc()
   
   # Check if qualification passed
-  qualOK <- results$summarised %>% qualificationPassed()
+  qualOK <- results$summarised %>% qualification_passed()
   print(ifelse(qualOK, "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
   
   return(qualOK)
@@ -272,7 +272,7 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @importFrom pbmcapply progressBar
 #' @importFrom zip unzip
 #' @export
-runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
+run_qualification_core <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
   packagesNo <- length(packages)
   if (packagesNo == 0) {
     stop("No packages to qualify")
@@ -291,7 +291,7 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
     qualSuite <- file.path(tmpDir, suiteDir)
     with_dir(
       tmpDir,
-      decryptFolder(from=baseDir, to=suiteDir, private_key=credentials@private_key_path,
+      decrypt_folder(from=baseDir, to=suiteDir, private_key=credentials@private_key_path,
                     passphrase=credentials@passphrase)
     )
   }
@@ -353,14 +353,14 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
   
   # Clean test results
   testResultsCleaned <- testResults %>%
-    purrr::map(~cleanPackageResults(.x))
+    purrr::map(~clean_package_results(.x))
   
   # Collect warnings
   warnings <- testResults %>%
-    purrr::map(~collectPackageWarnings(.x))
+    purrr::map(~collect_package_warnings(.x))
   
   summarisedResults <- packages %>% purrr::map_df(.f=function(package) {
-    return(testResultsCleaned[[package]] %>% bindPackageAndVersion(package))
+    return(testResultsCleaned[[package]] %>% bind_package_and_version(package))
   })
   
   return(list(summarised=summarisedResults, all=testResultsCleaned, warnings=warnings, qualSuite=qualSuite))
@@ -377,14 +377,14 @@ runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, ski
 #' @param qualification_suite qualification suite object
 #' @return nothing
 #' @importFrom rmarkdown render
-renderReport <- function(results, packages, fullname, initials=NULL, output_dir, qualification_suite) {
+render_report <- function(results, packages, fullname, initials=NULL, output_dir, qualification_suite) {
   credentials <- qualification_suite@credentials
   eCampsisQual <- "ecampsis" %in% packages
 
   # Report filename
   reportFilename <- paste0(sprintf("IQ_OQ_%s-", ifelse(eCampsisQual, "e-Campsis", "Campsis_Suite")),
                            ifelse(eCampsisQual, getNamespaceVersion("ecampsis"), getNamespaceVersion("campsis")),
-                           "_", getOSName(short=TRUE), "_", initials,
+                           "_", get_os_name(short=TRUE), "_", initials,
                            "_", gsub("-", "", x=Sys.Date() %>% as.character()))
   
   # Initials deduced from fullname (if not provided)

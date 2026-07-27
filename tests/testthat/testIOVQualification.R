@@ -36,7 +36,7 @@ test_that(getTestName(getTestDescription("ADVAN4 TRANS4 model with IOV on ALAG1 
     add(Observations(times=seq(72, 96, by=1), compartment=2)) %>%
     add(IOV(colname="IOV_ALAG1", NormalDistribution(0, 1)))
 
-  # BUG in RxODE/rxode2 with alag when no observation 0: see method 'fixRxODEBug'
+  # BUG in RxODE/rxode2 with alag when no observation 0: see method 'fix_rxode_bug'
   for (engine in testEngines) {
     qualNocb <- qualifyModel(ctlPath=ctlPath, modelName=modelName, dataset=dataset, dest=engine,
                              variables="CP", settings=Settings(NOCB(TRUE)), skipNM=skipNONMEMPreparation)

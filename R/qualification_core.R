@@ -27,16 +27,16 @@ areEqual <- function(x, xref, tolerance, id, type) {
 #' @importFrom dplyr distinct filter mutate pull rename rename_at select
 #' @importFrom ggplot2 aes geom_line geom_point ggplot ggtitle scale_colour_discrete ylab
 #' @importFrom tibble add_column as_tibble
-#' @importFrom campsis obsOnly
+#' @importFrom campsis obs_only
 #' @export
 compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_source="NONMEM") {
   
   # Check destination engine
-  checkDest(dest)
+  check_dest(dest)
   
   # Filtering on observations
-  ref_results <- ipred %>% campsis::obsOnly()
-  campsis_results <- as.data.frame(campsis) %>% campsis::obsOnly()
+  ref_results <- ipred %>% campsis::obs_only()
+  campsis_results <- as.data.frame(campsis) %>% campsis::obs_only()
 
   # Access ORIGINAL_ID column from Campsis results
   # Originally column was accessed from NONMEM results

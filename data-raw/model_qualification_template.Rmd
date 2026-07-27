@@ -44,7 +44,7 @@ notes <- params$notes
 computerInfo <-
   c('Full name:'=Sys.info()[['user']],
     'Computer name:'=Sys.info()[['nodename']],
-    'Operating system:'=getOSName(),
+    'Operating system:'=get_os_name(),
     'R version:'=paste(R.Version()[c('major', 'minor')], collapse='.'),
     'rxode2 version:'=getNamespaceVersion('rxode2') %>% as.character(),
     'mrgsolve version:'=getNamespaceVersion('mrgsolve') %>% as.character(),

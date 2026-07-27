@@ -95,11 +95,11 @@ with_dir <- function(dir, expr) {
 #' @importFrom jsonlite read_json
 #' @importFrom openssl decrypt_envelope
 #' @return nothing
-decryptFile <- function(file, private_key, passphrase=NULL) {
+decrypt_file <- function(file, private_key, passphrase=NULL) {
   out <- jsonlite::read_json(file)
-  out$iv <- hexStringToRaw(out$iv[[1]])
-  out$session <- hexStringToRaw(out$session[[1]])
-  out$data <- hexStringToRaw(out$data[[1]])
+  out$iv <- hex_string_to_raw(out$iv[[1]])
+  out$session <- hex_string_to_raw(out$session[[1]])
+  out$data <- hex_string_to_raw(out$data[[1]])
   .file  <-  gsub(".encrypted", "", file)
   zz = file(.file, "wb")
   tmp <- openssl::decrypt_envelope(out$data, out$iv, out$session, key=private_key, password=passphrase) |>
@@ -114,7 +114,7 @@ decryptFile <- function(file, private_key, passphrase=NULL) {
 #' @importFrom jsonlite write_json
 #' @importFrom rlang raw_deparse_str
 #' @return nothing
-encryptFile <- function(file, public_key) {
+encrypt_file <- function(file, public_key) {
   out <- openssl::encrypt_envelope(file, public_key)
   out$iv <- rlang::raw_deparse_str(out$iv)
   out$session <- rlang::raw_deparse_str(out$session)
@@ -130,7 +130,7 @@ encryptFile <- function(file, public_key) {
 #' @param to destination folder
 #' @param public_key path to public key
 #' @return nothing
-encryptFolder <- function(from, to, public_key) {
+encrypt_folder <- function(from, to, public_key) {
   # Copy from original to encrypted folder
   dir.create(to, showWarnings=FALSE)
   file.copy(file.path(from, list.files(from)), to, recursive=TRUE)
@@ -142,7 +142,7 @@ encryptFolder <- function(from, to, public_key) {
     filename <- basename(file)
     
     with_dir(tmpDir, {
-      encryptFile(file=filename, public_key=public_key)
+      encrypt_file(file=filename, public_key=public_key)
       unlink(filename)
     })
   }
@@ -155,7 +155,7 @@ encryptFolder <- function(from, to, public_key) {
 #' @param private_key path to private key
 #' @param passphrase passphrase
 #' @return nothing
-decryptFolder <- function(from, to, private_key, passphrase) {
+decrypt_folder <- function(from, to, private_key, passphrase) {
   # Copy from original to encrypted folder
   dir.create(to, showWarnings=FALSE)
   file.copy(file.path(from, list.files(from)), to, recursive=TRUE)
@@ -167,7 +167,7 @@ decryptFolder <- function(from, to, private_key, passphrase) {
     filename <- basename(file)
     
     with_dir(tmpDir, {
-      decryptFile(file=filename, private_key=private_key, passphrase=passphrase)
+      decrypt_file(file=filename, private_key=private_key, passphrase=passphrase)
       unlink(filename)
     })
   }
@@ -177,7 +177,7 @@ decryptFolder <- function(from, to, private_key, passphrase) {
 #' 
 #' @param x single string
 #' @return raw vector
-hexStringToRaw <- function(x) {
+hex_string_to_raw <- function(x) {
   return(gsub("(.{2})", "\\1 ", x) |>
            strsplit(" ") |>
            dplyr::first() |>

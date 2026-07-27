@@ -3,7 +3,7 @@
 #' 
 #' @param dest destination engine, character
 #' 
-checkDest <- function(dest) {
+check_dest <- function(dest) {
   if (!(dest %>% length() == 1 && dest %in% c("rxode2", "mrgsolve"))) {
     stop("Dest must be rxode2 or mrgsolve")
   }
@@ -29,7 +29,7 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
                     dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred",
                     ipred_source="NONMEM") {
   # Check destination engine
-  checkDest(dest)
+  check_dest(dest)
   
   # Dataset to table
   isCampsisDataset <- is(dataset, "dataset")
@@ -55,14 +55,14 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   table <- table %>%
     dplyr::filter(ID %in% refIds) %>%
     dplyr::arrange(ID, TIME) %>%
-    addSimulationIDColumn()
+    add_simulation_id_column()
   ipred <- ipred %>%
     dplyr::filter(ID %in% refIds) %>%
     dplyr::arrange(ID, TIME) %>%
-    addSimulationIDColumn()
+    add_simulation_id_column()
 
   # Check destination engine
-  checkDest(dest)
+  check_dest(dest)
   
   # Simulate with rxode2 or mrgsolve
   # If dataset is a Campsis dataset, it will be used as is (e.g. Declare added automatically with mrgsolve, etc.)
@@ -71,10 +71,10 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
                                dest=dest, seed=seed, settings=settings, outvars=variables)
   
   # Append ORIGINAL_ID
-  campsis <- appendOriginalId(campsis, table)
+  campsis <- append_original_id(campsis, table)
   
   # Fix rxode2 bug
-  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=dataset, dest=dest)
+  campsis <- fix_rxode_bug(campsis=campsis, model=model, dataset=dataset, dest=dest)
   
   # Compare results
   summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest, ipred_source=ipred_source)
@@ -96,7 +96,7 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
 #' @param dest destination engine
 #' @return the corrected output if the bug was not present if RxODE
 #' @importFrom dplyr filter
-fixRxODEBug <- function(campsis, model, dataset, dest) {
+fix_rxode_bug <- function(campsis, model, dataset, dest) {
   if (dest %in% c("RxODE", "rxode2")) {
     if (is(dataset, "dataset")) {
       times <- dataset %>% getTimes()
@@ -119,7 +119,7 @@ fixRxODEBug <- function(campsis, model, dataset, dest) {
 #' @param dataset engine table OR Campsis dataset
 #' @return updated output
 #' @importFrom dplyr distinct left_join relocate select
-appendOriginalId <- function(x, dataset) {
+append_original_id <- function(x, dataset) {
   if (is(dataset, "data.frame")) {
     if ("ORIGINAL_ID" %in% colnames(dataset)) {
       idPairs <- dataset %>% dplyr::select(ID, ORIGINAL_ID) %>% dplyr::distinct()
@@ -137,7 +137,7 @@ appendOriginalId <- function(x, dataset) {
 #' @param id current identifier column, default is 'ID'
 #' @return updated data frame
 #' @importFrom dplyr arrange group_by group_indices rename_at select
-addSimulationIDColumn <- function(dataset, id="ID") {
+add_simulation_id_column <- function(dataset, id="ID") {
   if ("ID" %in% colnames(dataset) && id != "ID") {
     dataset <- dataset %>% dplyr::select(-ID)
   }

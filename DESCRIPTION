@@ -1,7 +1,7 @@
 Type: Package
 Package: campsisqual
 Title: Campsis Qualification Package
-Version: 1.4.1
+Version: 1.5.0
 Authors@R: 
     person("Nicolas", "Luyckx", , "nicolas.luyckx@calvagone.com", role = c("aut", "cre"))
 Description: This package allows to run the qualification of the Campsis
@@ -23,6 +23,7 @@ Imports:
     ggplot2,
     jsonlite,
     kableExtra,
+    lifecycle,
     magrittr,
     openssl,
     parallel,
@@ -52,7 +53,6 @@ VignetteBuilder:
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.3
 Collate:
     'data.R'
     'special_operators.R'
@@ -67,3 +67,5 @@ Collate:
     'qualification_core.R'
     'qualify.R'
     'risk_metrics.R'
+    'deprecated_methods.R'
+Config/roxygen2/version: 8.0.0
