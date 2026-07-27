@@ -125,7 +125,7 @@ getTable <- function(summary, id) {
   get_table(summary = summary, id = id)
 }
 
-setGeneric("getTable", function(summary, id, variable) {
+setGeneric("getTable", function(summary, id) {
   lifecycle::deprecate_warn("1.5.0", "getTable()", "get_table()")
   get_table(summary = summary, id = id)
 })
