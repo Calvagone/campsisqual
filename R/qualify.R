@@ -1,16 +1,15 @@
-
 #' Check the destination engine.
-#' 
+#'
 #' @param dest destination engine, character
-#' 
-checkDest <- function(dest) {
+#'
+check_dest <- function(dest) {
   if (!(dest %>% length() == 1 && dest %in% c("rxode2", "mrgsolve"))) {
     stop("Dest must be rxode2 or mrgsolve")
   }
 }
 
 #' Qualify function.
-#' 
+#'
 #' @param model Campsis model to be qualified
 #' @param dataset Campsis dataset or data frame to be qualified
 #' @param ipred individual predictions to be compared with (=reference results)
@@ -25,23 +24,32 @@ checkDest <- function(dest) {
 #' @importFrom dplyr arrange filter
 #' @importFrom campsismod export
 #' @export
-qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
-                    dest="rxode2", seed=1, settings=Settings(NOCB(TRUE)), idref="ipred",
-                    ipred_source="NONMEM") {
+qualify <- function(
+  model,
+  dataset,
+  ipred,
+  variables,
+  tolerance = 1e-2,
+  dest = "rxode2",
+  seed = 1,
+  settings = Settings(NOCB(TRUE)),
+  idref = "ipred",
+  ipred_source = "NONMEM"
+) {
   # Check destination engine
-  checkDest(dest)
-  
+  check_dest(dest)
+
   # Dataset to table
   isCampsisDataset <- is(dataset, "dataset")
   if (isCampsisDataset) {
     settingsNM <- settings
     settingsNM@nocb@enable <- TRUE # NOCB always TRUE for NONMEM
     table <- dataset %>%
-      campsismod::export(dest="mrgsolve", model=model, seed=seed, settings=settingsNM)
+      campsismod::export(dest = "mrgsolve", model = model, seed = seed, settings = settingsNM)
   } else {
     table <- dataset
   }
-  
+
   # Ignore IDs mechanism
   datasetIds <- table$ID %>% unique()
   ipredIds <- ipred$ID %>% unique()
@@ -55,33 +63,50 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
   table <- table %>%
     dplyr::filter(ID %in% refIds) %>%
     dplyr::arrange(ID, TIME) %>%
-    addSimulationIDColumn()
+    add_simulation_id_column()
   ipred <- ipred %>%
     dplyr::filter(ID %in% refIds) %>%
     dplyr::arrange(ID, TIME) %>%
-    addSimulationIDColumn()
+    add_simulation_id_column()
 
   # Check destination engine
-  checkDest(dest)
-  
+  check_dest(dest)
+
   # Simulate with rxode2 or mrgsolve
   # If dataset is a Campsis dataset, it will be used as is (e.g. Declare added automatically with mrgsolve, etc.)
   # If dataset is a table, we give the table with the ID (from 1 to subjects) and ORIGINAL_ID columns
-  campsis <- campsis::simulate(model, dataset=if (isCampsisDataset) {dataset} else {table},
-                               dest=dest, seed=seed, settings=settings, outvars=variables)
-  
+  campsis <- campsis::simulate(
+    model,
+    dataset = if (isCampsisDataset) {
+      dataset
+    } else {
+      table
+    },
+    dest = dest,
+    seed = seed,
+    settings = settings,
+    outvars = variables
+  )
+
   # Append ORIGINAL_ID
-  campsis <- appendOriginalId(campsis, table)
-  
+  campsis <- append_original_id(campsis, table)
+
   # Fix rxode2 bug
-  campsis <- fixRxODEBug(campsis=campsis, model=model, dataset=dataset, dest=dest)
-  
+  campsis <- fix_rxode_bug(campsis = campsis, model = model, dataset = dataset, dest = dest)
+
   # Compare results
-  summary <- compare(ipred, campsis, variables=variables, tolerance=tolerance, dest=dest, ipred_source=ipred_source)
-  
+  summary <- compare(
+    ipred,
+    campsis,
+    variables = variables,
+    tolerance = tolerance,
+    dest = dest,
+    ipred_source = ipred_source
+  )
+
   # Show if qualification passed or failed
   cat(ifelse(summary %>% passed(), "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
-  
+
   return(summary)
 }
 
@@ -89,23 +114,24 @@ qualify <- function(model, dataset, ipred, variables, tolerance=1e-2,
 #' Description of the bug:
 #' If the model has a lag time and if the dataset does have an observation at time 0,
 #' RxODE still outputs the time 0.
-#' 
+#'
 #' @param campsis Campsis output
 #' @param model Campsis model
 #' @param dataset engine table OR Campsis dataset
 #' @param dest destination engine
 #' @return the corrected output if the bug was not present if RxODE
 #' @importFrom dplyr filter
-fixRxODEBug <- function(campsis, model, dataset, dest) {
+#' @importFrom campsis get_times
+fix_rxode_bug <- function(campsis, model, dataset, dest) {
   if (dest %in% c("RxODE", "rxode2")) {
     if (is(dataset, "dataset")) {
-      times <- dataset %>% getTimes()
-      
+      times <- dataset %>% campsis::get_times()
+
       # If LAG is found in model & time 0 does not exists in observations
       # We remove time 0 from the output
       properties <- model@compartments@properties
       if (!is.null(properties %>% find(LagTime(1))) && !(0 %in% times)) {
-        campsis <- campsis %>% dplyr::filter(TIME!=0)
+        campsis <- campsis %>% dplyr::filter(TIME != 0)
       }
     }
   }
@@ -113,17 +139,17 @@ fixRxODEBug <- function(campsis, model, dataset, dest) {
 }
 
 #' Append original ID to simulation output if it exists in the dataset.
-#' 
+#'
 #' @param x Campsis output
 #' @param dataset Campsis dataset or data frame
 #' @param dataset engine table OR Campsis dataset
 #' @return updated output
 #' @importFrom dplyr distinct left_join relocate select
-appendOriginalId <- function(x, dataset) {
+append_original_id <- function(x, dataset) {
   if (is(dataset, "data.frame")) {
     if ("ORIGINAL_ID" %in% colnames(dataset)) {
       idPairs <- dataset %>% dplyr::select(ID, ORIGINAL_ID) %>% dplyr::distinct()
-      x <- x %>% dplyr::left_join(idPairs, by="ID") %>% dplyr::relocate(ID, ORIGINAL_ID)
+      x <- x %>% dplyr::left_join(idPairs, by = "ID") %>% dplyr::relocate(ID, ORIGINAL_ID)
     }
   }
   return(x)
@@ -137,24 +163,28 @@ appendOriginalId <- function(x, dataset) {
 #' @param id current identifier column, default is 'ID'
 #' @return updated data frame
 #' @importFrom dplyr arrange group_by group_indices rename_at select
-addSimulationIDColumn <- function(dataset, id="ID") {
+add_simulation_id_column <- function(dataset, id = "ID") {
   if ("ID" %in% colnames(dataset) && id != "ID") {
     dataset <- dataset %>% dplyr::select(-ID)
   }
   # Current ID is renamed into ORIGINAL_ID
   if (!("ORIGINAL_ID" %in% colnames(dataset))) {
     dataset <- dataset %>%
-      dplyr::rename_at(.vars=id, .funs=function(x){"ORIGINAL_ID"})
+      dplyr::rename_at(.vars = id, .funs = function(x) {
+        "ORIGINAL_ID"
+      })
   }
   # Arrange rows by ORIGINAL_ID
   dataset <- dataset %>%
     dplyr::arrange(ORIGINAL_ID)
-  
+
   # Add simulation ID column
   dataset <- dataset %>%
-    tibble::add_column(ID=dataset %>% dplyr::group_by(ORIGINAL_ID) %>%
-                         dplyr::group_indices(), .before="ORIGINAL_ID")
+    tibble::add_column(
+      ID = dataset %>% dplyr::group_by(ORIGINAL_ID) %>% dplyr::group_indices(),
+      .before = "ORIGINAL_ID"
+    )
   # Arrange rows by ID
-  dataset <- dataset %>% dplyr::arrange(ID) 
+  dataset <- dataset %>% dplyr::arrange(ID)
   return(dataset)
 }
