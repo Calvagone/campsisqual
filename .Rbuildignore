@@ -6,3 +6,7 @@
 ^README\.Rmd$
 ^\.positai$
 ^\.claude$
+^codecov\.yml$
+^air\.toml$
+^cran-comments\.md$
+^\.vscode$
