@@ -1,10 +1,9 @@
-
 #_______________________________________________________________________________
 #----                     qualification_summary class                       ----
 #_______________________________________________________________________________
 #'
 #' Qualification summary class.
-#' 
+#'
 #' @slot ids list of subject ID's being qualified
 #' @slot original_ids list of original ID's
 #' @slot variables variables from dataset that were qualified
@@ -31,8 +30,12 @@ setClass(
     model_name = "character",
     tolerance = "numeric"
   ),
-  prototype(ipred_source="<SOURCE>", model_name="<MODEL_NAME>", dest="<SIMULATION_ENGINE>",
-            tolerance=as.numeric(NA)),
+  prototype(
+    ipred_source = "<SOURCE>",
+    model_name = "<MODEL_NAME>",
+    dest = "<SIMULATION_ENGINE>",
+    tolerance = as.numeric(NA)
+  ),
 )
 
 #_______________________________________________________________________________
@@ -40,7 +43,7 @@ setClass(
 #_______________________________________________________________________________
 
 #' Get qualification plot for given subject ID and variable.
-#' 
+#'
 #' @param summary summary object
 #' @param id subject ID
 #' @param variable compared variable
@@ -56,18 +59,22 @@ setGeneric("get_plot", function(summary, id, variable) {
 })
 
 #' @rdname get_plot
-setMethod("get_plot", signature = c("qualification_summary", "numeric", "character"), definition = function(summary, id, variable) {
-  id <- as.character(id)
-  list <- summary@plots[[id]]
-  return(list[[variable]])
-})
+setMethod(
+  "get_plot",
+  signature = c("qualification_summary", "numeric", "character"),
+  definition = function(summary, id, variable) {
+    id <- as.character(id)
+    list <- summary@plots[[id]]
+    return(list[[variable]])
+  }
+)
 
 #_______________________________________________________________________________
 #----                            get_table                                  ----
 #_______________________________________________________________________________
 
 #' Get qualification results (table form) for given subject ID.
-#' 
+#'
 #' @param summary summary object
 #' @param id subject ID
 #' @return a data frame with all variables being compared
@@ -93,7 +100,7 @@ setMethod("get_table", signature = c("qualification_summary", "numeric"), defini
 #_______________________________________________________________________________
 
 #' Say if the qualification passed or not.
-#' 
+#'
 #' @param summary qualification summary object
 #' @return TRUE/FALSE
 #' @export
@@ -109,7 +116,7 @@ setGeneric("passed", function(summary) {
 #' @rdname passed
 setMethod("passed", signature = c("qualification_summary"), definition = function(summary) {
   vector <- as.vector(as.matrix(summary@summary %>% dplyr::select(-ID)))
-  return(all(vector=="PASS"))
+  return(all(vector == "PASS"))
 })
 
 #_______________________________________________________________________________
@@ -126,29 +133,46 @@ setMethod("passed", signature = c("qualification_summary"), definition = functio
 #' @param notes additional notes to be included in the report, character, default is NULL
 #' @param ... additional parameters, unused
 #' @importFrom rmarkdown render
-setMethod("write", signature=c("qualification_summary", "character"),
-          definition=function(object, file, original_model=NULL, failed_only=TRUE, debug_tables=TRUE, notes=NULL, ...) {
-  # tmpFile <- "C:/prj/campsisqual/data-raw/model_qualification_template.Rmd"
+setMethod(
+  "write",
+  signature = c("qualification_summary", "character"),
+  definition = function(
+    object,
+    file,
+    original_model = NULL,
+    failed_only = TRUE,
+    debug_tables = TRUE,
+    notes = NULL,
+    ...
+  ) {
+    # tmpFile <- "C:/prj/campsisqual/data-raw/model_qualification_template.Rmd"
 
-  # Export Rmd to temporary file
-  tmpFile <- tempfile(fileext = ".Rmd")
-  fileConn <- file(tmpFile)
-  writeLines(text=campsisqual::model_qualification_template, con=fileConn)
-  close(fileConn)
-  
-  # Filename and output directory
-  output_dir <- dirname(file)
-  output_file <- basename(file)
-  
-  title <- sprintf("Qualification of Campsis model against %s predictions", object@ipred_source)
-  
-  # Render with Rmd
-  rmarkdown::render(
-    input=tmpFile,
-    output_format="pdf_document",
-    output_file=output_file,
-    output_dir=output_dir,
-    params=list(set_title=title, qual_summary=object, original_model=original_model,
-                failed_only=failed_only, debug_tables=debug_tables, notes=notes)
-  )
-})
+    # Export Rmd to temporary file
+    tmpFile <- tempfile(fileext = ".Rmd")
+    fileConn <- file(tmpFile)
+    writeLines(text = campsisqual::model_qualification_template, con = fileConn)
+    close(fileConn)
+
+    # Filename and output directory
+    output_dir <- dirname(file)
+    output_file <- basename(file)
+
+    title <- sprintf("Qualification of Campsis model against %s predictions", object@ipred_source)
+
+    # Render with Rmd
+    rmarkdown::render(
+      input = tmpFile,
+      output_format = "pdf_document",
+      output_file = output_file,
+      output_dir = output_dir,
+      params = list(
+        set_title = title,
+        qual_summary = object,
+        original_model = original_model,
+        failed_only = failed_only,
+        debug_tables = debug_tables,
+        notes = notes
+      )
+    )
+  }
+)

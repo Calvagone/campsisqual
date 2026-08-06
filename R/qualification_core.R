@@ -1,4 +1,3 @@
-
 #' Are vectors equal given the tolerance.
 #'
 #' @param x first vector
@@ -10,9 +9,12 @@
 #' @importFrom assertthat assert_that
 #' @export
 are_equal <- function(x, xref, tolerance, id, type) {
-  assertthat::assert_that(length(x)==length(xref), msg=sprintf("x and xref (%s) do not have the same length (ID=%s)", type, as.character(id)))
-  relativeChange <- (x - xref)/xref
-  return(abs(relativeChange) < tolerance | (x==0 & xref==0))
+  assertthat::assert_that(
+    length(x) == length(xref),
+    msg = sprintf("x and xref (%s) do not have the same length (ID=%s)", type, as.character(id))
+  )
+  relativeChange <- (x - xref) / xref
+  return(abs(relativeChange) < tolerance | (x == 0 & xref == 0))
 }
 
 #' Compare NONMEM results with CAMPSIS results, according to the given tolerance.
@@ -29,11 +31,10 @@ are_equal <- function(x, xref, tolerance, id, type) {
 #' @importFrom tibble add_column as_tibble
 #' @importFrom campsis obs_only
 #' @export
-compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_source="NONMEM") {
-  
+compare <- function(ipred, campsis, variables, tolerance, dest = "rxode2", ipred_source = "NONMEM") {
   # Check destination engine
   check_dest(dest)
-  
+
   # Filtering on observations
   ref_results <- ipred %>% campsis::obs_only()
   campsis_results <- as.data.frame(campsis) %>% campsis::obs_only()
@@ -54,7 +55,7 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
   } else {
     original_ids <- character(ids %>% length())
   }
-  
+
   # Instantiate a new qualification summary object
   qualificationSummary <- new("qualification_summary")
   qualificationSummary@ids <- as.integer(ids)
@@ -63,113 +64,116 @@ compare <- function(ipred, campsis, variables, tolerance, dest="rxode2", ipred_s
   qualificationSummary@ipred_source <- ipred_source
   qualificationSummary@dest <- dest
   qualificationSummary@tolerance <- tolerance
-  
+
   variablesOfInterest <- variables
-  
+
   # Init qualification dataframe
-  qualification <- data.frame(ID=ids)
+  qualification <- data.frame(ID = ids)
   for (variable in variables) {
     qualification[, variable] <- rep(NA, length(ids))
   }
-  
+
   for (id in ids) {
-    index <- which(id==ids)
+    index <- which(id == ids)
     original_id <- original_ids[index]
-    
+
     ref_subj <- ref_results %>%
-      dplyr::filter(ID==id) %>%
-      dplyr::mutate(Simulation=ipred_source) %>%
+      dplyr::filter(ID == id) %>%
+      dplyr::mutate(Simulation = ipred_source) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
-    
+
     campsis_subj <- campsis_results %>%
-      dplyr::filter(ID==id) %>%
-      dplyr::mutate(Simulation=dest) %>%
+      dplyr::filter(ID == id) %>%
+      dplyr::mutate(Simulation = dest) %>%
       dplyr::select(c("ID", "TIME", "Simulation", dplyr::all_of(variablesOfInterest)))
-    
-    if (!all(are_equal(ref_subj$TIME, campsis_subj$TIME, tolerance=tolerance, id=id, type="TIME"))) {
+
+    if (!all(are_equal(ref_subj$TIME, campsis_subj$TIME, tolerance = tolerance, id = id, type = "TIME"))) {
       stop(paste0("Times are not identical between NONMEM and CAMPSIS for subject ", id))
     }
-    
+
     subj <- dplyr::bind_rows(campsis_subj, ref_subj)
     subj <- subj %>%
-      tidyr::gather(key="Variable", value="value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
+      tidyr::gather(key = "Variable", value = "value", dplyr::all_of(variablesOfInterest), -ID, -TIME, -Simulation)
     subj$Pass <- FALSE
-    
+
     # Qualification results summary
     for (output in variablesOfInterest) {
       refOutput <- subj %>%
-        dplyr::filter(Variable==output & Simulation==ipred_source) %>%
+        dplyr::filter(Variable == output & Simulation == ipred_source) %>%
         dplyr::pull(value)
-      
+
       campsisOutput <- subj %>%
-        dplyr::filter(Variable==output & Simulation==dest) %>%
+        dplyr::filter(Variable == output & Simulation == dest) %>%
         dplyr::pull(value)
-      
-      sameOutput <- are_equal(refOutput, campsisOutput, tolerance=tolerance, id=id, type="OUTPUT")
+
+      sameOutput <- are_equal(refOutput, campsisOutput, tolerance = tolerance, id = id, type = "OUTPUT")
       if (any(is.na(sameOutput))) {
         stop(paste0("NA's detected in original ID ", original_id))
       }
       if (all(sameOutput)) {
-        qualification[which(qualification$ID==id), output] <- "PASS"
+        qualification[which(qualification$ID == id), output] <- "PASS"
       } else {
-        qualification[which(qualification$ID==id), output] <- "FAIL"
+        qualification[which(qualification$ID == id), output] <- "FAIL"
       }
-      
+
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==ipred_source & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass = ifelse(Variable == output & Simulation == ipred_source & sameOutput, TRUE, Pass))
       subj <- subj %>%
-        dplyr::mutate(Pass=ifelse(Variable==output & Simulation==dest & sameOutput, TRUE, Pass))
+        dplyr::mutate(Pass = ifelse(Variable == output & Simulation == dest & sameOutput, TRUE, Pass))
     }
-    subj$Pass <-  ifelse(subj$Pass, "OK", "NOK")
-    
+    subj$Pass <- ifelse(subj$Pass, "OK", "NOK")
+
     # All pass
-    allPass <- all(qualification[which(qualification$ID==id), variablesOfInterest]=="PASS")
+    allPass <- all(qualification[which(qualification$ID == id), variablesOfInterest] == "PASS")
     allPass <- ifelse(allPass, "Pass", "Fail")
 
     # Saving plots
     plots <- list()
     for (output in variablesOfInterest) {
       data <- subj %>%
-        dplyr::filter(Variable==output) %>%
-        dplyr::mutate(Simulation=factor(Simulation, levels=c(ipred_source, dest)))
-      p <- ggplot2::ggplot(data=data, mapping=ggplot2::aes(x=TIME, y=value, group=Simulation)) + 
-        ggplot2::geom_line() + ggplot2::facet_wrap(~Simulation) +
-        ggplot2::geom_point(mapping=ggplot2::aes(color=Pass), size=4) +
+        dplyr::filter(Variable == output) %>%
+        dplyr::mutate(Simulation = factor(Simulation, levels = c(ipred_source, dest)))
+      p <- ggplot2::ggplot(data = data, mapping = ggplot2::aes(x = TIME, y = value, group = Simulation)) +
+        ggplot2::geom_line() +
+        ggplot2::facet_wrap(~Simulation) +
+        ggplot2::geom_point(mapping = ggplot2::aes(color = Pass), size = 4) +
         ggplot2::ylab(output) +
-        ggplot2::scale_colour_manual(values=c("NOK"="#FF0000", "OK"="#008080"), drop=FALSE)
+        ggplot2::scale_colour_manual(values = c("NOK" = "#FF0000", "OK" = "#008080"), drop = FALSE)
       plots[[output]] <- p
     }
     qualificationSummary@plots[[as.character(id)]] <- plots
-    
+
     # Saving table output
     timeCAMPSIS <- paste0("Time ", dest)
     timeNONMEM <- paste0("Time ", ipred_source)
-    
+
     tryCatch(
       {
         subjNONMEM <- subj %>%
-          dplyr::filter(Simulation==ipred_source) %>%
-          tidyr::spread(Simulation, value) %>% dplyr::rename_at(.vars="TIME", .funs=~timeNONMEM)
-        
-        subjCAMPSIS <- subj %>% dplyr::filter(Simulation==dest) %>%
+          dplyr::filter(Simulation == ipred_source) %>%
           tidyr::spread(Simulation, value) %>%
-          dplyr::rename_at(.vars="TIME", .funs=~timeCAMPSIS)
-      }, error=function(cond) {
+          dplyr::rename_at(.vars = "TIME", .funs = ~timeNONMEM)
+
+        subjCAMPSIS <- subj %>%
+          dplyr::filter(Simulation == dest) %>%
+          tidyr::spread(Simulation, value) %>%
+          dplyr::rename_at(.vars = "TIME", .funs = ~timeCAMPSIS)
+      },
+      error = function(cond) {
         warning(paste0("Problem with original ID ", original_id))
       }
     )
-    
+
     subjNONMEM <- tibble::as_tibble(subjNONMEM)
     subjNONMEM <- subjNONMEM %>%
-      tibble::add_column(TIME_CAMPSIS=subjCAMPSIS[, timeCAMPSIS], .after=timeNONMEM) %>%
-      dplyr::rename_at(.vars="TIME_CAMPSIS", .funs=~timeCAMPSIS)
+      tibble::add_column(TIME_CAMPSIS = subjCAMPSIS[, timeCAMPSIS], .after = timeNONMEM) %>%
+      dplyr::rename_at(.vars = "TIME_CAMPSIS", .funs = ~timeCAMPSIS)
     subjNONMEM[, dest] <- subjCAMPSIS[, dest]
     qualificationSummary@tables[[as.character(id)]] <- subjNONMEM
   }
-  
+
   # Saving summary
   qualificationSummary@summary <- qualification
 
   return(qualificationSummary)
 }
-

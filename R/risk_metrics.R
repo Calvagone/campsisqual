@@ -1,11 +1,10 @@
-
 summarise_riskmetric <- function(x, package) {
   UseMethod("summarise_riskmetric")
 }
 
 risk_metric_to_string <- function(x) {
   if (is.character(x)) {
-    return(paste0(as.character(x), collapse=", "))
+    return(paste0(as.character(x), collapse = ", "))
   } else {
     return("")
   }
@@ -41,18 +40,23 @@ summarise_riskmetric.pkg_metric_has_vignettes <- function(x, package) {
   # Let's simply override the default behavior
   result <- risk_metric_result(x)
   info <- risk_metric_to_string(x)
-  
+
   if (package %in% c("campsismod", "campsis")) {
     result <- "Yes"
     info <- sprintf("https://calvagone.github.io/%s.doc/articles", package)
   }
-  
-  return(tibble::tibble(Criteria="Has vignettes?", Result=result, `More info`=info, Category="Documentation"))
+
+  return(tibble::tibble(Criteria = "Has vignettes?", Result = result, `More info` = info, Category = "Documentation"))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_has_website <- function(x, package) {
-  return(tibble::tibble(Criteria="Has website?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Documentation"))
+  return(tibble::tibble(
+    Criteria = "Has website?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Documentation"
+  ))
 }
 
 get_package_branch <- function(package) {
@@ -72,37 +76,67 @@ summarise_riskmetric.pkg_metric_has_news <- function(x, package) {
   } else {
     info <- ""
   }
-  return(tibble::tibble(Criteria="Has NEWS file?", Result=result, `More info`=info, Category="Documentation"))
+  return(tibble::tibble(Criteria = "Has NEWS file?", Result = result, `More info` = info, Category = "Documentation"))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_has_maintainer <- function(x, package) {
-  return(tibble::tibble(Criteria="Has maintainer?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Maintenance"))
+  return(tibble::tibble(
+    Criteria = "Has maintainer?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Maintenance"
+  ))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_news_current <- function(x, package) {
-  return(tibble::tibble(Criteria="Package version in NEWS?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Maintenance"))
+  return(tibble::tibble(
+    Criteria = "Package version in NEWS?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Maintenance"
+  ))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_license <- function(x, package) {
-  return(tibble::tibble(Criteria="License", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Maintenance"))
+  return(tibble::tibble(
+    Criteria = "License",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Maintenance"
+  ))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_has_source_control <- function(x, package) {
-  return(tibble::tibble(Criteria="Has source control?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Transparency"))
+  return(tibble::tibble(
+    Criteria = "Has source control?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Transparency"
+  ))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_has_bug_reports_url <- function(x, package) {
-  return(tibble::tibble(Criteria="Has bug reports URL?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Transparency"))
+  return(tibble::tibble(
+    Criteria = "Has bug reports URL?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Transparency"
+  ))
 }
 
 #' @export
 summarise_riskmetric.pkg_metric_successful_tests <- function(x, package) {
-  return(tibble::tibble(Criteria="Were tests successful?", Result=risk_metric_result(x), `More info`=risk_metric_to_string(x), Category="Testing"))
+  return(tibble::tibble(
+    Criteria = "Were tests successful?",
+    Result = risk_metric_result(x),
+    `More info` = risk_metric_to_string(x),
+    Category = "Testing"
+  ))
 }
 
 #' @export
@@ -114,12 +148,17 @@ summarise_riskmetric.pkg_metric_online_code_coverage <- function(x, package) {
     result <- risk_metric_result(x)
     info <- risk_metric_to_string(x)
   }
-  return(tibble::tibble(Criteria="Online code coverage URL?", Result=result, `More info`=info, Category="Testing"))
+  return(tibble::tibble(
+    Criteria = "Online code coverage URL?",
+    Result = result,
+    `More info` = info,
+    Category = "Testing"
+  ))
 }
 
 #'
 #' Access package using the riskmetric package.
-#' 
+#'
 #' @param package package name
 #' @param successful_tests were tests successful?
 #' @return human readable table
@@ -129,7 +168,7 @@ summarise_riskmetric.pkg_metric_online_code_coverage <- function(x, package) {
 #' @importFrom dplyr arrange
 assess_package <- function(package, successful_tests) {
   path <- find.package(package)
-  if (length(path)==0) {
+  if (length(path) == 0) {
     stop(sprintf("Package '%s' not found", package))
   }
   if (length(path) > 1) {
@@ -149,32 +188,31 @@ assess_package <- function(package, successful_tests) {
       riskmetric::assess_news_current
     )
   )
-  
+
   # Compute a global score
   score <- riskmetric::pkg_score(assessment)
   score$has_vignettes <- NULL # Removed because depends on installations of vignettes
   score$license <- NULL # Removed because value is NA
-  
+
   # TODO: decide what we do and how we weight
 
   # This will remove the class on the list object
   assessment <- as.list(assessment)
-  
+
   # Add metrics for successful tests
   class(successful_tests) <- c(class(successful_tests), "pkg_metric_successful_tests")
-  
+
   # Add metrics for online code coverage
   onlineCodeCoverage <- FALSE # By default
   class(onlineCodeCoverage) <- c(class(onlineCodeCoverage), "pkg_metric_online_code_coverage")
-  
+
   assessment[[length(assessment) + 1]] <- successful_tests
   assessment[[length(assessment) + 1]] <- onlineCodeCoverage
-  
+
   retValue <- assessment %>%
-    purrr::map(~summarise_riskmetric(.x, package=package)) %>%
+    purrr::map(~ summarise_riskmetric(.x, package = package)) %>%
     purrr::list_rbind() %>%
     dplyr::arrange(Category)
-  
+
   return(retValue)
 }
-

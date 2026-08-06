@@ -4,7 +4,7 @@ library(campsis)
 
 context("Qualification of the NONMEM subroutines, implemented in Campsis, against NONMEM")
 
-test_folder <-  file.path(getwd(), test_path())
+test_folder <- file.path(getwd(), test_path())
 SKIP_NONMEM_PREPARATION <- TRUE
 
 # Load utilities
@@ -13,17 +13,17 @@ source(file.path(test_folder, "testUtils.R"))
 # Activate suite
 activate_suite(ENABLE_SUITE)
 
-advan_filename <- function(advan, trans, ext=".mod") {
+advan_filename <- function(advan, trans, ext = ".mod") {
   return(paste0("advan", advan, "_trans", trans, ext))
 }
 
 create_dataset <- function() {
   dataset <- Dataset(3)
-  dataset <- dataset %>% add(Bolus(time=0, amount=1000, compartment=1, ii=12, addl=2))
-  obs_times <- seq(1, 36, by=1)
-  obs_times <- obs_times[!(obs_times %in% c(0,12,24))] # Remove obs at administrations (for RxODE...)
+  dataset <- dataset %>% add(Bolus(time = 0, amount = 1000, compartment = 1, ii = 12, addl = 2))
+  obs_times <- seq(1, 36, by = 1)
+  obs_times <- obs_times[!(obs_times %in% c(0, 12, 24))] # Remove obs at administrations (for RxODE...)
   dataset <- dataset %>%
-    add(Observations(times=obs_times, compartment=1)) # Compartment number will be adapted
+    add(Observations(times = obs_times, compartment = 1)) # Compartment number will be adapted
   return(dataset)
 }
 
@@ -42,11 +42,17 @@ qualify_subroutine <- function(advan, trans) {
   results <- NULL
   option <- get_campsisqual_option()
   qualSuite <- option$QUALIFICATION_SUITE
-  modelName <- advan_filename(advan, trans, ext="")
+  modelName <- advan_filename(advan, trans, ext = "")
   for (engine in TEST_ENGINES) {
-    qual <- qualify_model(ctlPath=get_ctl_path(advan, trans, skipNM=SKIP_NONMEM_PREPARATION), modelName=modelName,
-                         dataset=create_dataset(), dest=engine, variables="CP", updateDataset=TRUE,
-                         skipNM=SKIP_NONMEM_PREPARATION)
+    qual <- qualify_model(
+      ctlPath = get_ctl_path(advan, trans, skipNM = SKIP_NONMEM_PREPARATION),
+      modelName = modelName,
+      dataset = create_dataset(),
+      dest = engine,
+      variables = "CP",
+      updateDataset = TRUE,
+      skipNM = SKIP_NONMEM_PREPARATION
+    )
     results <- results %>%
       append(qual %>% passed())
   }
