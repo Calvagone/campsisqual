@@ -1,27 +1,25 @@
-
 #' Get more information on the given certificate.
-#' 
+#'
 #' @param cert certificate
 #' @return certificate information
 #' @importFrom PKI PKI.get.cert.info
 #' @export
-getCertificateInformation <- function(cert) {
-
+get_certificate_information <- function(cert) {
   certInfo <- PKI::PKI.get.cert.info(cert)
-  certInfo$subject <- subjectToNamedVector(certInfo$subject)
-  certInfo$issuer <- subjectToNamedVector(certInfo$issuer)
-  
+  certInfo$subject <- subject_to_named_vector(certInfo$subject)
+  certInfo$issuer <- subject_to_named_vector(certInfo$issuer)
+
   return(certInfo)
 }
 
-subjectToNamedVector <- function(x) {
+subject_to_named_vector <- function(x) {
   tmp <- strsplit(x, "/")[[1]]
   tmp <- tmp[tmp != ""]
   tmp <- strsplit(tmp, "=")
-  values <- tmp %>% 
-    purrr::map(~.x[2])
-  names <- tmp %>% 
-    purrr::map_chr(~.x[1])
+  values <- tmp %>%
+    purrr::map(~ .x[2])
+  names <- tmp %>%
+    purrr::map_chr(~ .x[1])
   values <- values %>%
     setNames(names)
   return(values)
@@ -29,11 +27,11 @@ subjectToNamedVector <- function(x) {
 
 #'
 #' Get the CA certificate.
-#' 
+#'
 #' @return CA certificate, character vector
 #' @export
 #'
-getCACertificate <- function() {
+get_ca_certificate <- function() {
   pem <- "-----BEGIN CERTIFICATE-----
 MIIGRTCCBC2gAwIBAgIUasdur7jIuVoeEC5zqjzPtf5XO/cwDQYJKoZIhvcNAQEL
 BQAwgbExCzAJBgNVBAYTAkZSMREwDwYDVQQIDAhMeW9ubmFpczEaMBgGA1UEBwwR
@@ -71,12 +69,12 @@ sNhfDES+d7n7j84ouIfpVqCs8B4xxmr8ZeLgKxrzien/99doF5nZVAXLhucadJbV
 SPAi3WOaHObWhtV9Wa9G2OAfs01bMjtCKw==
 -----END CERTIFICATE-----
 "
-  retValue <- strsplit(x=pem, split="\n")[[1]]
+  retValue <- strsplit(x = pem, split = "\n")[[1]]
   return(retValue)
 }
 
 #' With directory
-#' 
+#'
 #' @param dir directory
 #' @param expr expression
 #' @export
@@ -95,14 +93,14 @@ with_dir <- function(dir, expr) {
 #' @importFrom jsonlite read_json
 #' @importFrom openssl decrypt_envelope
 #' @return nothing
-decryptFile <- function(file, private_key, passphrase=NULL) {
+decrypt_file <- function(file, private_key, passphrase = NULL) {
   out <- jsonlite::read_json(file)
-  out$iv <- hexStringToRaw(out$iv[[1]])
-  out$session <- hexStringToRaw(out$session[[1]])
-  out$data <- hexStringToRaw(out$data[[1]])
-  .file  <-  gsub(".encrypted", "", file)
-  zz = file(.file, "wb")
-  tmp <- openssl::decrypt_envelope(out$data, out$iv, out$session, key=private_key, password=passphrase) |>
+  out$iv <- hex_string_to_raw(out$iv[[1]])
+  out$session <- hex_string_to_raw(out$session[[1]])
+  out$data <- hex_string_to_raw(out$data[[1]])
+  .file <- gsub(".encrypted", "", file)
+  zz <- file(.file, "wb")
+  tmp <- openssl::decrypt_envelope(out$data, out$iv, out$session, key = private_key, password = passphrase) |>
     writeBin(zz)
   close(zz)
 }
@@ -114,74 +112,75 @@ decryptFile <- function(file, private_key, passphrase=NULL) {
 #' @importFrom jsonlite write_json
 #' @importFrom rlang raw_deparse_str
 #' @return nothing
-encryptFile <- function(file, public_key) {
+encrypt_file <- function(file, public_key) {
   out <- openssl::encrypt_envelope(file, public_key)
   out$iv <- rlang::raw_deparse_str(out$iv)
   out$session <- rlang::raw_deparse_str(out$session)
   out$data <- rlang::raw_deparse_str(out$data)
   out |>
-    jsonlite::write_json(path=file(paste0(file, ".encrypted")))
+    jsonlite::write_json(path = file(paste0(file, ".encrypted")))
 }
 
 
 #' Encrypt folder.
-#' 
+#'
 #' @param from original folder
 #' @param to destination folder
 #' @param public_key path to public key
 #' @return nothing
-encryptFolder <- function(from, to, public_key) {
+encrypt_folder <- function(from, to, public_key) {
   # Copy from original to encrypted folder
-  dir.create(to, showWarnings=FALSE)
-  file.copy(file.path(from, list.files(from)), to, recursive=TRUE)
-  
-  files <- list.files(path=to, recursive=TRUE)
+  dir.create(to, showWarnings = FALSE)
+  file.copy(file.path(from, list.files(from)), to, recursive = TRUE)
+
+  files <- list.files(path = to, recursive = TRUE)
   for (i in seq_len(length(files))) {
     tmpDir <- file.path(to, dirname(files[i]))
     file <- files[i]
     filename <- basename(file)
-    
+
     with_dir(tmpDir, {
-      encryptFile(file=filename, public_key=public_key)
+      encrypt_file(file = filename, public_key = public_key)
       unlink(filename)
     })
   }
 }
 
 #' Decrypt folder.
-#' 
+#'
 #' @param from original folder
 #' @param to destination folder
 #' @param private_key path to private key
 #' @param passphrase passphrase
 #' @return nothing
-decryptFolder <- function(from, to, private_key, passphrase) {
+decrypt_folder <- function(from, to, private_key, passphrase) {
   # Copy from original to encrypted folder
-  dir.create(to, showWarnings=FALSE)
-  file.copy(file.path(from, list.files(from)), to, recursive=TRUE)
-  
-  files <- list.files(path=to, recursive=TRUE)
+  dir.create(to, showWarnings = FALSE)
+  file.copy(file.path(from, list.files(from)), to, recursive = TRUE)
+
+  files <- list.files(path = to, recursive = TRUE)
   for (i in seq_len(length(files))) {
     tmpDir <- file.path(to, dirname(files[i]))
     file <- files[i]
     filename <- basename(file)
-    
+
     with_dir(tmpDir, {
-      decryptFile(file=filename, private_key=private_key, passphrase=passphrase)
+      decrypt_file(file = filename, private_key = private_key, passphrase = passphrase)
       unlink(filename)
     })
   }
 }
 
 #' Hex string to raw.
-#' 
+#'
 #' @param x single string
 #' @return raw vector
-hexStringToRaw <- function(x) {
-  return(gsub("(.{2})", "\\1 ", x) |>
-           strsplit(" ") |>
-           dplyr::first() |>
-           strtoi(16L) |>
-           as.raw())
+hex_string_to_raw <- function(x) {
+  return(
+    gsub("(.{2})", "\\1 ", x) |>
+      strsplit(" ") |>
+      dplyr::first() |>
+      strtoi(16L) |>
+      as.raw()
+  )
 }
-

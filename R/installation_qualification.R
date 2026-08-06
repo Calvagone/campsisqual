@@ -1,22 +1,21 @@
-
 #'
 #' Clean package results.
 #'
 #' @param raw raw results
 #' @return cleaned results
 #' @importFrom dplyr as_tibble group_by rename summarise
-cleanPackageResults <- function(raw) {
+clean_package_results <- function(raw) {
   retValue <- raw %>%
     dplyr::as_tibble() %>%
     dplyr::rename(Test = test) %>%
     dplyr::group_by(file, context, Test) %>%
     dplyr::summarise(
       #NumTests = first(nb),
-      Passed   = sum(passed),
-      Failed   = sum(failed),
+      Passed = sum(passed),
+      Failed = sum(failed),
       Warnings = sum(warning),
-      Errors   = sum(as.numeric(error)),
-      Skipped  = sum(as.numeric(skipped)),
+      Errors = sum(as.numeric(error)),
+      Skipped = sum(as.numeric(skipped)),
       .groups = "drop"
     )
   return(retValue)
@@ -28,7 +27,7 @@ cleanPackageResults <- function(raw) {
 #' @param results results
 #' @return summarised results
 #' @importFrom dplyr summarise_if
-summariseResults <- function(results) {
+summarise_results <- function(results) {
   return(results %>% dplyr::summarise_if(is.numeric, sum))
 }
 
@@ -38,11 +37,15 @@ summariseResults <- function(results) {
 #' @param x data frame
 #' @return printed kable
 #' @importFrom kableExtra kbl kable_styling column_spec
-printSummaryKable <- function(x) {
-  return(x %>% kableExtra::kbl(booktabs=T) %>%
-           kableExtra::kable_styling(full_width=T, latex_options=c("striped", "hold_position")) %>%
-           kableExtra::column_spec(1, width="2.6cm") %>%
-           kableExtra::column_spec(2, width="1.5cm") %>% print())
+print_summary_kable <- function(x) {
+  return(
+    x %>%
+      kableExtra::kbl(booktabs = T) %>%
+      kableExtra::kable_styling(full_width = T, latex_options = c("striped", "hold_position")) %>%
+      kableExtra::column_spec(1, width = "2.6cm") %>%
+      kableExtra::column_spec(2, width = "1.5cm") %>%
+      print()
+  )
 }
 
 #'
@@ -51,10 +54,14 @@ printSummaryKable <- function(x) {
 #' @param x data frame
 #' @return printed kable
 #' @importFrom kableExtra kbl kable_styling column_spec
-printKable <- function(x) {
-  return(x %>% kableExtra::kbl(booktabs=T) %>%
-           kableExtra::kable_styling(full_width=T, latex_options=c("striped", "hold_position")) %>%
-           kableExtra::column_spec(1, width = "8cm") %>% print())
+print_kable <- function(x) {
+  return(
+    x %>%
+      kableExtra::kbl(booktabs = T) %>%
+      kableExtra::kable_styling(full_width = T, latex_options = c("striped", "hold_position")) %>%
+      kableExtra::column_spec(1, width = "8cm") %>%
+      print()
+  )
 }
 
 #'
@@ -63,7 +70,7 @@ printKable <- function(x) {
 #' @param results results
 #' @return TRUE or FALSE
 #' @importFrom dplyr summarise_if
-qualificationPassed <- function(results) {
+qualification_passed <- function(results) {
   row <- results %>% dplyr::summarise_if(is.numeric, sum)
   retValue <- TRUE
   if (row$Failed > 0) {
@@ -86,67 +93,74 @@ qualificationPassed <- function(results) {
 #' @return nothing
 #' @importFrom dplyr nest_by
 #' @importFrom purrr pwalk
-writeResults <- function(results) {
+write_results <- function(results) {
   nestedResults <- results %>%
     dplyr::nest_by(file, context, .key = "Results") %>%
     dplyr::nest_by(file, .key = "Categories")
-  return(purrr::pwalk(list(nestedResults$file, nestedResults$Categories), writeFileResults))
+  return(purrr::pwalk(list(nestedResults$file, nestedResults$Categories), write_file_results))
 }
 
 #'
 #' Write file results.
 #'
 #' @param file file
-#' @param categories categories 
+#' @param categories categories
 #' @param ... extra arguments
 #' @return nothing
 #' @importFrom purrr pwalk
-writeFileResults <- function(file, categories, ...) {
+write_file_results <- function(file, categories, ...) {
   #cat("###", file, "\n")
-  return(purrr::pwalk(list(categories$context, categories$Results, file), writeCategoryResults))
+  return(purrr::pwalk(list(categories$context, categories$Results, file), write_category_results))
 }
 
 #'
 #' Write category results.
 #'
 #' @param category category
-#' @param tests tests 
+#' @param tests tests
 #' @param file file
 #' @param ... extra arguments
 #' @return nothing
 #' @importFrom kableExtra kbl kable_styling column_spec
-writeCategoryResults <- function(category, tests, file, ...) {
+write_category_results <- function(category, tests, file, ...) {
   cat(paste0("**", category, "**\n\n"))
   cat("*Script: ", file, "*\n")
-  return(tests %>% kableExtra::kbl(booktabs=T, longtable=T) %>%
-           kableExtra::kable_styling(full_width=F, latex_options=c("hold_position", "striped")) %>%
-           kableExtra::column_spec(1, width = "8cm") %>% print())
+  return(
+    tests %>%
+      kableExtra::kbl(booktabs = T, longtable = T) %>%
+      kableExtra::kable_styling(full_width = F, latex_options = c("hold_position", "striped")) %>%
+      kableExtra::column_spec(1, width = "8cm") %>%
+      print()
+  )
 }
 
-bindPackageAndVersion <- function(x, package) {
-  return(cbind("Package"=package, "Version"=getNamespaceVersion(package) %>% as.character(),
-               x %>% summariseResults()))
+bind_package_and_version <- function(x, package) {
+  return(cbind(
+    "Package" = package,
+    "Version" = getNamespaceVersion(package) %>% as.character(),
+    x %>% summarise_results()
+  ))
 }
 
 #' Get OS name.
-#' 
+#'
 #' @param short if TRUE, returns a short version of the OS name (e.g., "Win11" for Windows 11)
 #' @return the OS name
 #' @export
-getOSName <- function(short=FALSE) {
+get_os_name <- function(short = FALSE) {
   # 1. Get basic info
   sys <- Sys.info()
   sysname <- sys[["sysname"]]
   release <- sys[["release"]]
-  
+
   # 2. Refined Windows detection
   if (sysname == "Windows") {
     # Extract build number
     build <- as.numeric(gsub(".*?([0-9]+).*", "\\1", sys[["version"]]))
-    
+
     if (!is.na(build) && build >= 22000) {
       # For Win 11, we manually set the name and ignore the "10" in release
-      os <- paste("Windows 11", sys[["machine"]]) 
+      os <- paste("Windows 11", sys[["machine"]])
     } else {
       # For Win 10 and older, use the standard release string
       os <- paste("Windows", release, sys[["machine"]])
@@ -155,44 +169,46 @@ getOSName <- function(short=FALSE) {
     # Fallback for macOS/Linux
     os <- paste(sysname, release)
   }
-  
+
   # 3. Handle the "short" formatting
   if (short) {
-    os <- gsub("Windows", "Win", x=os)
-    os <- gsub(" ", "", x=os) 
+    os <- gsub("Windows", "Win", x = os)
+    os <- gsub(" ", "", x = os)
   }
-  
+
   return(os)
 }
 
 #'
 #' Collect package warnings
-#' 
+#'
 #' @param x package test results
 #' @return a tibble with 2 columns: 'warning', 'occurrences'
 #' @importFrom dplyr group_by summarise
 #' @importFrom tibble tibble
 #' @importFrom purrr map_chr discard
-collectPackageWarnings <- function(x) {
-  assertthat::assert_that(is(x, "testthat_results"), msg="x must be of type 'testthat_results'")
+collect_package_warnings <- function(x) {
+  assertthat::assert_that(is(x, "testthat_results"), msg = "x must be of type 'testthat_results'")
   warningMessages <- NULL
   for (i in 1:length(x)) {
     testResult <- x[[i]]
-    warnings <- testResult$results %>% purrr::map_chr(.f=function(y) {
-      if (is(y, "expectation_warning")) {
-        return(y$message)
-      } else {
-        return(as.character(NA))
-      }
-    }) %>% purrr::discard(~is.na(.x))
+    warnings <- testResult$results %>%
+      purrr::map_chr(.f = function(y) {
+        if (is(y, "expectation_warning")) {
+          return(y$message)
+        } else {
+          return(as.character(NA))
+        }
+      }) %>%
+      purrr::discard(~ is.na(.x))
     warningMessages <- warningMessages %>%
       append(warnings)
   }
-  
-  retValue <- tibble::tibble(warning=warningMessages) %>%
+
+  retValue <- tibble::tibble(warning = warningMessages) %>%
     dplyr::group_by(warning) %>%
-    dplyr::summarise(occurrences=dplyr::n())
-  
+    dplyr::summarise(occurrences = dplyr::n())
+
   return(retValue)
 }
 
@@ -214,44 +230,77 @@ collectPackageWarnings <- function(x) {
 #' @importFrom tictoc tic toc
 #' @importFrom PKI PKI.load.cert PKI.verifyCA
 #' @export
-runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd(), qualification_suite=NULL,
-                             cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
-  if (!all(packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis"))) {
+run_qualification <- function(
+  packages,
+  fullname,
+  initials = NULL,
+  output_dir = getwd(),
+  qualification_suite = NULL,
+  cpu = 6L,
+  skip_vdiffr = TRUE,
+  skip_python = TRUE
+) {
+  if (
+    !all(
+      packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis")
+    )
+  ) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
   }
 
-  if (length(find.package("ncappc", quiet=TRUE))==0) stop("ncappc not installed")
-  if (length(find.package("tinytex", quiet=TRUE))==0) stop("tinytex not installed")
-  if (length(find.package("tictoc", quiet=TRUE))==0) stop("tictoc not installed")
-  if (length(find.package("mrgsolve", quiet=TRUE))==0) stop("mrgsolve not installed")
-  if (length(find.package("rxode2", quiet=TRUE))==0) stop("rxode2 not installed")
-  
+  if (length(find.package("ncappc", quiet = TRUE)) == 0) {
+    stop("ncappc not installed")
+  }
+  if (length(find.package("tinytex", quiet = TRUE)) == 0) {
+    stop("tinytex not installed")
+  }
+  if (length(find.package("tictoc", quiet = TRUE)) == 0) {
+    stop("tictoc not installed")
+  }
+  if (length(find.package("mrgsolve", quiet = TRUE)) == 0) {
+    stop("mrgsolve not installed")
+  }
+  if (length(find.package("rxode2", quiet = TRUE)) == 0) {
+    stop("rxode2 not installed")
+  }
+
   # Check tinyTEX installation
-  if (!checkTinyTEXInstallation()) {
+  if (!check_tinytex_installation()) {
     stop("TinyTeX is not properly installed. Please install it using tinytex::install_tinytex()")
   }
-  
-  isWindows <- tolower(getOSName()) %>% startsWith("win")
+
+  isWindows <- tolower(get_os_name()) %>% startsWith("win")
   if (isWindows) {
     defaultPath <- "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"
     if (file.exists(defaultPath)) {
-      Sys.setenv("RSTUDIO_PANDOC"=defaultPath)
+      Sys.setenv("RSTUDIO_PANDOC" = defaultPath)
     }
   }
-  
+
   tictoc::tic()
-  results <- runQualificationCore(packages=packages, qualification_suite=qualification_suite,
-                                  cpu=cpu, skip_vdiffr=skip_vdiffr, skip_python=skip_python)
+  results <- run_qualification_core(
+    packages = packages,
+    qualification_suite = qualification_suite,
+    cpu = cpu,
+    skip_vdiffr = skip_vdiffr,
+    skip_python = skip_python
+  )
   if (!is.null(qualification_suite)) {
-    report <- renderReport(results=results, packages=packages, fullname=fullname, initials=initials,
-                           output_dir=output_dir, qualification_suite=qualification_suite)
+    report <- render_report(
+      results = results,
+      packages = packages,
+      fullname = fullname,
+      initials = initials,
+      output_dir = output_dir,
+      qualification_suite = qualification_suite
+    )
   }
   tictoc::toc()
-  
+
   # Check if qualification passed
-  qualOK <- results$summarised %>% qualificationPassed()
+  qualOK <- results$summarised %>% qualification_passed()
   print(ifelse(qualOK, "QUALIFICATION SUCCESSFUL", "QUALIFICATION FAILED"))
-  
+
   return(qualOK)
 }
 
@@ -272,152 +321,179 @@ runQualification <- function(packages, fullname, initials=NULL, output_dir=getwd
 #' @importFrom pbmcapply progressBar
 #' @importFrom zip unzip
 #' @export
-runQualificationCore <- function(packages, qualification_suite=NULL, cpu=6L, skip_vdiffr=TRUE, skip_python=TRUE) {
+run_qualification_core <- function(
+  packages,
+  qualification_suite = NULL,
+  cpu = 6L,
+  skip_vdiffr = TRUE,
+  skip_python = TRUE
+) {
   packagesNo <- length(packages)
   if (packagesNo == 0) {
     stop("No packages to qualify")
   }
   qualSuite <- NULL
   if (is.null(qualification_suite)) {
-    cat("No qualification suite provided. Only the base tests will be performed and no qualification report will be produced.\n")
+    cat(
+      "No qualification suite provided. Only the base tests will be performed and no qualification report will be produced.\n"
+    )
   } else {
     credentials <- qualification_suite@credentials
     zipPath <- qualification_suite@path
     tmpDir <- tempdir()
-    zip::unzip(zipfile=zipPath, exdir=tmpDir)
+    zip::unzip(zipfile = zipPath, exdir = tmpDir)
     baseDir <- basename(zipPath) |>
-      gsub(pattern=".zip", replacement="")
+      gsub(pattern = ".zip", replacement = "")
     suiteDir <- "qualification_suite"
     qualSuite <- file.path(tmpDir, suiteDir)
     with_dir(
       tmpDir,
-      decryptFolder(from=baseDir, to=suiteDir, private_key=credentials@private_key_path,
-                    passphrase=credentials@passphrase)
+      decrypt_folder(
+        from = baseDir,
+        to = suiteDir,
+        private_key = credentials@private_key_path,
+        passphrase = credentials@passphrase
+      )
     )
   }
-  
+
   # Check package existence and check that it was installed with tests
   for (package in packages) {
     # Check package exists (error is raised if it does not exist)
     pkgPath <- find.package(package)
-    
+
     # Check that testthat repo exists
     testRepo <- file.path(pkgPath, "tests/testthat")
     if (!dir.exists(testRepo)) {
       stop(paste0("Package ", package, " does not have a testthat repository"))
     }
   }
-  
+
   # 1 CPU per package, don't create workers if not needed
   if (packagesNo <= cpu) {
     cpu <- packagesNo
   }
-  
+
   # Start cluster configuration
   if (cpu > 1) {
-    cl <-  parallel::makeCluster(cpu)
+    cl <- parallel::makeCluster(cpu)
     doSNOW::registerDoSNOW(cl)
   }
   `%dopar%` <- foreach::`%dopar%`
-  
+
   # Progress bar
-  pb <- pbmcapply::progressBar(max=packagesNo, style="ETA")
+  pb <- pbmcapply::progressBar(max = packagesNo, style = "ETA")
   progress <- function(n) utils::setTxtProgressBar(pb, n)
-  opts <- list(progress=progress)
-  
+  opts <- list(progress = progress)
+
   # Preparing options
   qualOptions <- list()
   if (is.null(qualification_suite)) {
-    qualOptions$QUALIFICATION_SUITE=""
+    qualOptions$QUALIFICATION_SUITE <- ""
   } else {
-    qualOptions$QUALIFICATION_SUITE=qualSuite
-    qualOptions$QUALIFICATION_SUITE_N_MODELS=qualification_suite@nmodels
+    qualOptions$QUALIFICATION_SUITE <- qualSuite
+    qualOptions$QUALIFICATION_SUITE_N_MODELS <- qualification_suite@nmodels
   }
-  
-  testResults <- foreach::foreach(i=seq_along(packages), .combine=append, .options.snow=opts) %dopar% {
-    package <- packages[i]
-    Sys.setenv("NOT_CRAN"=TRUE)
-    options(campsisqual.options=qualOptions)
-    options(campsistrans.options=list(SKIP_PHARMPY_TESTS=skip_python))
-    options(campsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr))
-    options(ecampsis.options=list(SKIP_LONG_TESTS=FALSE, SKIP_VDIFFR_TESTS=skip_vdiffr, SKIP_NM_IMPORT_TESTS=FALSE))
-    retValue <- list()
-    retValue[[package]] <- testthat::test_package(package, reporter=c("list"), stop_on_failure=FALSE, stop_on_warning=FALSE)
-    return(retValue)
-  }
-  
+
+  testResults <- foreach::foreach(i = seq_along(packages), .combine = append, .options.snow = opts) %dopar%
+    {
+      package <- packages[i]
+      Sys.setenv("NOT_CRAN" = TRUE)
+      options(campsisqual.options = qualOptions)
+      options(campsistrans.options = list(SKIP_PHARMPY_TESTS = skip_python))
+      options(campsis.options = list(SKIP_LONG_TESTS = FALSE, SKIP_VDIFFR_TESTS = skip_vdiffr))
+      options(
+        ecampsis.options = list(SKIP_LONG_TESTS = FALSE, SKIP_VDIFFR_TESTS = skip_vdiffr, SKIP_NM_IMPORT_TESTS = FALSE)
+      )
+      retValue <- list()
+      retValue[[package]] <- testthat::test_package(
+        package,
+        reporter = c("list"),
+        stop_on_failure = FALSE,
+        stop_on_warning = FALSE
+      )
+      return(retValue)
+    }
+
   # Stop cluster
   if (cpu > 1) {
     parallel::stopCluster(cl)
   }
-  
+
   # Clean test results
   testResultsCleaned <- testResults %>%
-    purrr::map(~cleanPackageResults(.x))
-  
+    purrr::map(~ clean_package_results(.x))
+
   # Collect warnings
   warnings <- testResults %>%
-    purrr::map(~collectPackageWarnings(.x))
-  
-  summarisedResults <- packages %>% purrr::map_df(.f=function(package) {
-    return(testResultsCleaned[[package]] %>% bindPackageAndVersion(package))
-  })
-  
-  return(list(summarised=summarisedResults, all=testResultsCleaned, warnings=warnings, qualSuite=qualSuite))
+    purrr::map(~ collect_package_warnings(.x))
+
+  summarisedResults <- packages %>%
+    purrr::map_df(.f = function(package) {
+      return(testResultsCleaned[[package]] %>% bind_package_and_version(package))
+    })
+
+  return(list(summarised = summarisedResults, all = testResultsCleaned, warnings = warnings, qualSuite = qualSuite))
 }
 
 #'
 #' Render report with rmarkdown.
 #'
 #' @param results results
-#' @param packages packages 
+#' @param packages packages
 #' @param fullname fullname
 #' @param initials username initials to be used in the filename. If not provided, initials are deduced from the fullname.
 #' @param output_dir output directory
 #' @param qualification_suite qualification suite object
 #' @return nothing
 #' @importFrom rmarkdown render
-renderReport <- function(results, packages, fullname, initials=NULL, output_dir, qualification_suite) {
+render_report <- function(results, packages, fullname, initials = NULL, output_dir, qualification_suite) {
   credentials <- qualification_suite@credentials
   eCampsisQual <- "ecampsis" %in% packages
 
   # Report filename
-  reportFilename <- paste0(sprintf("IQ_OQ_%s-", ifelse(eCampsisQual, "e-Campsis", "Campsis_Suite")),
-                           ifelse(eCampsisQual, getNamespaceVersion("ecampsis"), getNamespaceVersion("campsis")),
-                           "_", getOSName(short=TRUE), "_", initials,
-                           "_", gsub("-", "", x=Sys.Date() %>% as.character()))
-  
+  reportFilename <- paste0(
+    sprintf("IQ_OQ_%s-", ifelse(eCampsisQual, "e-Campsis", "Campsis_Suite")),
+    ifelse(eCampsisQual, getNamespaceVersion("ecampsis"), getNamespaceVersion("campsis")),
+    "_",
+    get_os_name(short = TRUE),
+    "_",
+    initials,
+    "_",
+    gsub("-", "", x = Sys.Date() %>% as.character())
+  )
+
   # Initials deduced from fullname (if not provided)
   parts <- strsplit(fullname, " ")[[1]]
   if (is.null(initials)) {
     initials <- substring(parts, 0, 1) |>
-      paste0(collapse="")
+      paste0(collapse = "")
   }
-  
-  rmdFilename <- ifelse(eCampsisQual,
-                        "qualification_ecampsis_template.Rmd",
-                        "qualification_campsis_template.Rmd")
-  
+
+  rmdFilename <- ifelse(eCampsisQual, "qualification_ecampsis_template.Rmd", "qualification_campsis_template.Rmd")
+
   # Rendering report
   report <- tryCatch(
     rmarkdown::render(
-      input=file.path(results$qualSuite, "reporting", rmdFilename),
-      params=list(results=results$all,
-                  summarised_results=results$summarised,
-                  warnings=results$warnings,
-                  packages=packages,
-                  fullname=fullname,
-                  credentials=credentials),
-      output_file=reportFilename,
-      output_dir=output_dir
+      input = file.path(results$qualSuite, "reporting", rmdFilename),
+      params = list(
+        results = results$all,
+        summarised_results = results$summarised,
+        warnings = results$warnings,
+        packages = packages,
+        fullname = fullname,
+        credentials = credentials
+      ),
+      output_file = reportFilename,
+      output_dir = output_dir
     ),
-    error=function(cond) {
+    error = function(cond) {
       print(cond)
     },
-    finally={
-      unlink(results$qualSuite, recursive=TRUE)
+    finally = {
+      unlink(results$qualSuite, recursive = TRUE)
     }
   )
-  
+
   return(report)
 }

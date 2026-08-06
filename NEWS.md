@@ -1,3 +1,10 @@
+# campsisqual 1.5.0
+
+* Migrate campsisqual to snake_case #20
+* Remove dependency to Campsis #21
+* Standardise tests in package #22
+* Format code with Air #23
+
 # campsisqual 1.4.1
 
 * Update method getOSName #18
@@ -48,7 +55,7 @@
 
 # campsisqual 1.1.0
 
-* Improve areEqual method (for troubleshooting)
+* Improve are_equal method (for troubleshooting)
 * Review model suite qualification
 * Update github actions workflow
 
