@@ -8,7 +8,7 @@ test_folder <- file.path(getwd(), test_path())
 SKIP_NONMEM_PREPARATION <- TRUE
 
 # Load utilities
-source(file.path(test_folder, "testUtils.R"))
+source(file.path(test_folder, "test-utils.R"))
 
 # Activate suite
 activate_suite(ENABLE_SUITE)

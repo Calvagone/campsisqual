@@ -7,7 +7,7 @@ context("Qualification of models with inter-occasion variability (IOV) against N
 SKIP_NONMEM_PREPARATION <- TRUE
 
 # Load utilities
-source(file.path(getwd(), test_path(), "testUtils.R"))
+source(file.path(getwd(), test_path(), "test-utils.R"))
 
 # Activate suite
 activate_suite(ENABLE_SUITE)

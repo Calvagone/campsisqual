@@ -5,7 +5,7 @@ library(campsis)
 context("Qualification of the Campsis model suite against NONMEM")
 
 # Load utilities
-source(file.path(getwd(), test_path(), "testUtils.R"))
+source(file.path(getwd(), test_path(), "test-utils.R"))
 
 # Activate suite
 activate_suite(ENABLE_SUITE)
