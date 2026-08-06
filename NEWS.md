@@ -3,6 +3,7 @@
 * Migrate campsisqual to snake_case #20
 * Remove dependency to Campsis #21
 * Standardise tests in package #22
+* Format code with Air #23
 
 # campsisqual 1.4.1
 
