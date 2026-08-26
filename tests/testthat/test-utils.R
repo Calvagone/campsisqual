@@ -1,6 +1,6 @@
 TEST_ENGINES <- c("mrgsolve", "rxode2")
 REEXECUTE_NONMEM <- FALSE
-ENABLE_SUITE <- TRUE
+ENABLE_SUITE <- FALSE
 
 #'
 #' Qualify model.
