@@ -242,7 +242,7 @@ run_qualification <- function(
 ) {
   if (
     !all(
-      packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans")
+      packages %in% c("campsismod", "campsis", "campsisnca", "campsismisc", "campsisqual", "campsistrans", "ecampsis")
     )
   ) {
     stop("Invalid packages. Only packages from the Campsis suite can be qualified.")
