@@ -169,26 +169,23 @@ get_all_model_names <- function() {
 
 generate_model_indexes <- function(pks) {
   option <- get_campsisqual_option()
-  nModels <- option$QUALIFICATION_SUITE_N_MODELS
-  randomPickUp <- TRUE
+  n_models <- option$QUALIFICATION_SUITE_N_MODELS
+  random_pick_up <- TRUE
 
-  if (nModels > length(pks)) {
-    nModels <- length(pks)
+  if (n_models > length(pks)) {
+    n_models <- length(pks)
   }
 
-  nTotal <- length(pks)
+  n_total <- length(pks)
   set.seed(1)
 
-  if (randomPickUp) {
-    modelIndexes <- base::sample(seq_len(nTotal), size = nModels, replace = FALSE)
+  if (random_pick_up) {
+    model_indexes <- base::sample(seq_len(n_total), size = n_models, replace = FALSE)
   } else {
-    modelIndexes <- seq_len(nTotal)
+    model_indexes <- seq_len(n_total)
   }
-  return(modelIndexes)
+  return(model_indexes)
 }
-
-pks <- get_all_model_names()
-modelIndexes <- generate_model_indexes(pks)
 
 qualify_model_suite_model <- function(shortName) {
   dataset <- generate_dataset_based_on_model_name(shortName)
@@ -213,7 +210,10 @@ test_that("Qualification of the model suite against NONMEM is successful", {
     testthat::skip("Qualification suite not provided")
   }
 
-  for (index in modelIndexes) {
+  pks <- get_all_model_names()
+  model_indexes <- generate_model_indexes(pks)
+
+  for (index in model_indexes) {
     shortName <- pks[index]
     results <- qualify_model_suite_model(shortName = shortName)
     expect_true(length(results) > 0)
